@@ -1,0 +1,53 @@
+# ---------------------------------------------------------------------------
+# fabric-auditor: keep production data and secrets out of version control.
+# Only code, docs and fictional examples/ data belong in git.
+# ---------------------------------------------------------------------------
+
+# --- Real device data / outputs -------------------------------------------
+*.xml
+*.cfg
+*.conf
+*.set
+*.txt.export
+# ...but allow fictional fixtures
+!examples/**
+!tests/fixtures/**
+inventory/
+private/
+exports/
+backups/
+reports/
+out/
+design/
+
+# --- Secrets ---------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.kdbx
+secrets.yaml
+secrets.yml
+
+# --- Python ----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Editors / OS ----------------------------------------------------------
+.DS_Store
+.idea/
+.vscode/
+*.swp
