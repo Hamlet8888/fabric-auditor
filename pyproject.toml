@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fabric-auditor"
+version = "0.1.0"
+description = "Intent-based validation for multi-site BGP EVPN/VXLAN spine-leaf fabrics"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+yaml = ["PyYAML>=5.4"]   # optional: core.miniyaml is used when PyYAML is absent
+
+[project.scripts]
+fabric-auditor = "core.cli:main"
+
+[tool.setuptools]
+packages = ["core"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
