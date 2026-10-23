@@ -10,6 +10,9 @@ network-automation-tools command-line interface.
     python3 -m netauto.cli audit --expected private/expected-state.json --source nxapi
     python3 -m netauto.cli collect --expected private/expected-state.json --out private/state --raw
 
+    # troubleshooting
+    python3 -m netauto.cli diff private/state/before private/state/after
+
 ``--expected`` is the ``expected-state.json`` that network-design writes next to the
 configs. ``audit`` loads state from ``--state-dir`` (default: ``state/`` next to that
 file) or, with ``--source nxapi``, from the switches themselves; runs the compliance checks at ``--step`` (default: the last migration step) and
@@ -282,6 +285,46 @@ def cmd_collect(args: argparse.Namespace, out: TextIO) -> int:
     return EXIT_OK if collection.ok else EXIT_NONCOMPLIANT
 
 
+def cmd_diff(args: argparse.Namespace, out: TextIO) -> int:
+    from netauto import diff
+
+    try:
+        before, after = diff.load_states(args.before), diff.load_states(args.after)
+    except ValueError as exc:
+        raise DesignError(str(exc)) from None
+    devices = None
+    if args.expected:
+        design = _load(args)
+        devices = [d.hostname for d in design.select(args.site)]
+    elif args.site:
+        raise DesignError("--site needs --expected to know which switches belong to the site")
+    diffs = diff.diff_fabric(before, after, devices)
+
+    if args.format == "json":
+        json.dump(diff.to_dict(diffs), out, indent=2, default=str)
+        out.write("\n")
+    else:
+        style = Style(_use_color(args.color, out))
+        colour = {diff.LOST: ("red", "bold"), diff.CHANGED: ("yellow",), diff.GAINED: ("green",)}
+        w = out.write
+        w(style("netauto diff", "bold") + f"  {args.before}  ->  {args.after}\n")
+        if not diffs:
+            w("\nNo differences.\n")
+        for kind in diff.KINDS:
+            rows = [d for d in diffs if d.kind == kind]
+            if not rows:
+                continue
+            w("\n" + style(f"{kind} ({len(rows)})", *colour[kind]) + "\n")
+            for d in rows:
+                w(f"  {d.device:<16} {d.fact}\n")
+                w(style(f"      {_fmt(d.before)}  ->  {_fmt(d.after)}", "dim") + "\n")
+        counts = ", ".join(f"{sum(1 for d in diffs if d.kind == k)} {k.lower()}" for k in diff.KINDS)
+        w(f"\nSummary: {counts}\n")
+    kinds = {d.kind for d in diffs}
+    failing = {"lost": {diff.LOST}, "changed": {diff.LOST, diff.CHANGED}, "any": set(diff.KINDS)}[args.fail_on]
+    return EXIT_NONCOMPLIANT if kinds & failing else EXIT_OK
+
+
 def cmd_inventory(args: argparse.Namespace, out: TextIO) -> int:
     design = _load(args)
     render_inventory(design, args.site, Style(_use_color(args.color, out)), out)
@@ -332,6 +375,20 @@ def build_parser() -> argparse.ArgumentParser:
     collect.add_argument("--out", required=True, metavar="DIR", help="folder for the snapshots")
     collect.add_argument("--raw", action="store_true", help="also save the raw NX-API output under DIR/raw/")
     collect.set_defaults(func=cmd_collect)
+
+    dif = sub.add_parser("diff", help="compare two state snapshots (before/after a change)",
+                         description="Compare two folders of state snapshots, e.g. from `netauto collect` before "
+                                     "and after a change, and list what was lost, changed or gained.")
+    dif.add_argument("before", metavar="BEFORE", help="folder of <hostname>.json snapshots before the change")
+    dif.add_argument("after", metavar="AFTER", help="folder of <hostname>.json snapshots after the change")
+    dif.add_argument("--expected", metavar="FILE", help="expected-state.json, to order switches and use --site")
+    dif.add_argument("--site", metavar="CODE", help="limit to one site (needs --expected)")
+    dif.add_argument("--format", choices=("table", "json"), default="table", help="output format")
+    dif.add_argument("--fail-on", choices=("lost", "changed", "any"), default="lost",
+                     help="exit 1 when there is anything of this kind or worse (default: lost)")
+    dif.add_argument("--color", choices=("auto", "always", "never"), default="auto",
+                     help="colourize output (default: auto)")
+    dif.set_defaults(func=cmd_diff)
 
     inv = sub.add_parser("inventory", parents=[common], help="show the devices and steps the design defines")
     inv.set_defaults(func=cmd_inventory)
