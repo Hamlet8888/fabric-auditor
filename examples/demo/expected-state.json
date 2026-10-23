@@ -429,35 +429,45 @@
      "type": "L2",
      "vlan": 10,
      "rd": "auto",
-     "route_target": "65110:110010"
+     "route_target": "65110:110010",
+     "subnet": "10.110.10.0/24",
+     "gateway": "10.110.10.1"
     },
     {
      "vni": 110020,
      "type": "L2",
      "vlan": 20,
      "rd": "auto",
-     "route_target": "65110:110020"
+     "route_target": "65110:110020",
+     "subnet": "10.110.20.0/24",
+     "gateway": "10.110.20.1"
     },
     {
      "vni": 110030,
      "type": "L2",
      "vlan": 30,
      "rd": "auto",
-     "route_target": "65110:110030"
+     "route_target": "65110:110030",
+     "subnet": "10.110.30.0/24",
+     "gateway": "10.110.30.1"
     },
     {
      "vni": 110040,
      "type": "L2",
      "vlan": 40,
      "rd": "auto",
-     "route_target": "65110:110040"
+     "route_target": "65110:110040",
+     "subnet": "10.110.40.0/24",
+     "gateway": "10.110.40.1"
     },
     {
      "vni": 110100,
      "type": "L2",
      "vlan": 100,
      "rd": "auto",
-     "route_target": "65110:110100"
+     "route_target": "65110:110100",
+     "subnet": "10.110.100.0/24",
+     "gateway": "10.110.100.1"
     }
    ],
    "nve": {
@@ -557,35 +567,45 @@
      "type": "L2",
      "vlan": 10,
      "rd": "auto",
-     "route_target": "65110:110010"
+     "route_target": "65110:110010",
+     "subnet": "10.110.10.0/24",
+     "gateway": "10.110.10.1"
     },
     {
      "vni": 110020,
      "type": "L2",
      "vlan": 20,
      "rd": "auto",
-     "route_target": "65110:110020"
+     "route_target": "65110:110020",
+     "subnet": "10.110.20.0/24",
+     "gateway": "10.110.20.1"
     },
     {
      "vni": 110030,
      "type": "L2",
      "vlan": 30,
      "rd": "auto",
-     "route_target": "65110:110030"
+     "route_target": "65110:110030",
+     "subnet": "10.110.30.0/24",
+     "gateway": "10.110.30.1"
     },
     {
      "vni": 110040,
      "type": "L2",
      "vlan": 40,
      "rd": "auto",
-     "route_target": "65110:110040"
+     "route_target": "65110:110040",
+     "subnet": "10.110.40.0/24",
+     "gateway": "10.110.40.1"
     },
     {
      "vni": 110100,
      "type": "L2",
      "vlan": 100,
      "rd": "auto",
-     "route_target": "65110:110100"
+     "route_target": "65110:110100",
+     "subnet": "10.110.100.0/24",
+     "gateway": "10.110.100.1"
     }
    ],
    "nve": {
@@ -704,35 +724,45 @@
      "type": "L2",
      "vlan": 10,
      "rd": "auto",
-     "route_target": "65110:110010"
+     "route_target": "65110:110010",
+     "subnet": "10.110.10.0/24",
+     "gateway": "10.110.10.1"
     },
     {
      "vni": 110020,
      "type": "L2",
      "vlan": 20,
      "rd": "auto",
-     "route_target": "65110:110020"
+     "route_target": "65110:110020",
+     "subnet": "10.110.20.0/24",
+     "gateway": "10.110.20.1"
     },
     {
      "vni": 110030,
      "type": "L2",
      "vlan": 30,
      "rd": "auto",
-     "route_target": "65110:110030"
+     "route_target": "65110:110030",
+     "subnet": "10.110.30.0/24",
+     "gateway": "10.110.30.1"
     },
     {
      "vni": 110040,
      "type": "L2",
      "vlan": 40,
      "rd": "auto",
-     "route_target": "65110:110040"
+     "route_target": "65110:110040",
+     "subnet": "10.110.40.0/24",
+     "gateway": "10.110.40.1"
     },
     {
      "vni": 110100,
      "type": "L2",
      "vlan": 100,
      "rd": "auto",
-     "route_target": "65110:110100"
+     "route_target": "65110:110100",
+     "subnet": "10.110.100.0/24",
+     "gateway": "10.110.100.1"
     }
    ],
    "nve": {
@@ -851,35 +881,45 @@
      "type": "L2",
      "vlan": 10,
      "rd": "auto",
-     "route_target": "65110:110010"
+     "route_target": "65110:110010",
+     "subnet": "10.110.10.0/24",
+     "gateway": "10.110.10.1"
     },
     {
      "vni": 110020,
      "type": "L2",
      "vlan": 20,
      "rd": "auto",
-     "route_target": "65110:110020"
+     "route_target": "65110:110020",
+     "subnet": "10.110.20.0/24",
+     "gateway": "10.110.20.1"
     },
     {
      "vni": 110030,
      "type": "L2",
      "vlan": 30,
      "rd": "auto",
-     "route_target": "65110:110030"
+     "route_target": "65110:110030",
+     "subnet": "10.110.30.0/24",
+     "gateway": "10.110.30.1"
     },
     {
      "vni": 110040,
      "type": "L2",
      "vlan": 40,
      "rd": "auto",
-     "route_target": "65110:110040"
+     "route_target": "65110:110040",
+     "subnet": "10.110.40.0/24",
+     "gateway": "10.110.40.1"
     },
     {
      "vni": 110100,
      "type": "L2",
      "vlan": 100,
      "rd": "auto",
-     "route_target": "65110:110100"
+     "route_target": "65110:110100",
+     "subnet": "10.110.100.0/24",
+     "gateway": "10.110.100.1"
     }
    ],
    "nve": {
@@ -1579,35 +1619,45 @@
      "type": "L2",
      "vlan": 10,
      "rd": "auto",
-     "route_target": "65120:120010"
+     "route_target": "65120:120010",
+     "subnet": "10.120.10.0/24",
+     "gateway": "10.120.10.1"
     },
     {
      "vni": 120020,
      "type": "L2",
      "vlan": 20,
      "rd": "auto",
-     "route_target": "65120:120020"
+     "route_target": "65120:120020",
+     "subnet": "10.120.20.0/24",
+     "gateway": "10.120.20.1"
     },
     {
      "vni": 120030,
      "type": "L2",
      "vlan": 30,
      "rd": "auto",
-     "route_target": "65120:120030"
+     "route_target": "65120:120030",
+     "subnet": "10.120.30.0/24",
+     "gateway": "10.120.30.1"
     },
     {
      "vni": 120040,
      "type": "L2",
      "vlan": 40,
      "rd": "auto",
-     "route_target": "65120:120040"
+     "route_target": "65120:120040",
+     "subnet": "10.120.40.0/24",
+     "gateway": "10.120.40.1"
     },
     {
      "vni": 120100,
      "type": "L2",
      "vlan": 100,
      "rd": "auto",
-     "route_target": "65120:120100"
+     "route_target": "65120:120100",
+     "subnet": "10.120.100.0/24",
+     "gateway": "10.120.100.1"
     }
    ],
    "nve": {
@@ -1707,35 +1757,45 @@
      "type": "L2",
      "vlan": 10,
      "rd": "auto",
-     "route_target": "65120:120010"
+     "route_target": "65120:120010",
+     "subnet": "10.120.10.0/24",
+     "gateway": "10.120.10.1"
     },
     {
      "vni": 120020,
      "type": "L2",
      "vlan": 20,
      "rd": "auto",
-     "route_target": "65120:120020"
+     "route_target": "65120:120020",
+     "subnet": "10.120.20.0/24",
+     "gateway": "10.120.20.1"
     },
     {
      "vni": 120030,
      "type": "L2",
      "vlan": 30,
      "rd": "auto",
-     "route_target": "65120:120030"
+     "route_target": "65120:120030",
+     "subnet": "10.120.30.0/24",
+     "gateway": "10.120.30.1"
     },
     {
      "vni": 120040,
      "type": "L2",
      "vlan": 40,
      "rd": "auto",
-     "route_target": "65120:120040"
+     "route_target": "65120:120040",
+     "subnet": "10.120.40.0/24",
+     "gateway": "10.120.40.1"
     },
     {
      "vni": 120100,
      "type": "L2",
      "vlan": 100,
      "rd": "auto",
-     "route_target": "65120:120100"
+     "route_target": "65120:120100",
+     "subnet": "10.120.100.0/24",
+     "gateway": "10.120.100.1"
     }
    ],
    "nve": {
@@ -1854,35 +1914,45 @@
      "type": "L2",
      "vlan": 10,
      "rd": "auto",
-     "route_target": "65120:120010"
+     "route_target": "65120:120010",
+     "subnet": "10.120.10.0/24",
+     "gateway": "10.120.10.1"
     },
     {
      "vni": 120020,
      "type": "L2",
      "vlan": 20,
      "rd": "auto",
-     "route_target": "65120:120020"
+     "route_target": "65120:120020",
+     "subnet": "10.120.20.0/24",
+     "gateway": "10.120.20.1"
     },
     {
      "vni": 120030,
      "type": "L2",
      "vlan": 30,
      "rd": "auto",
-     "route_target": "65120:120030"
+     "route_target": "65120:120030",
+     "subnet": "10.120.30.0/24",
+     "gateway": "10.120.30.1"
     },
     {
      "vni": 120040,
      "type": "L2",
      "vlan": 40,
      "rd": "auto",
-     "route_target": "65120:120040"
+     "route_target": "65120:120040",
+     "subnet": "10.120.40.0/24",
+     "gateway": "10.120.40.1"
     },
     {
      "vni": 120100,
      "type": "L2",
      "vlan": 100,
      "rd": "auto",
-     "route_target": "65120:120100"
+     "route_target": "65120:120100",
+     "subnet": "10.120.100.0/24",
+     "gateway": "10.120.100.1"
     }
    ],
    "nve": {
@@ -2001,35 +2071,45 @@
      "type": "L2",
      "vlan": 10,
      "rd": "auto",
-     "route_target": "65120:120010"
+     "route_target": "65120:120010",
+     "subnet": "10.120.10.0/24",
+     "gateway": "10.120.10.1"
     },
     {
      "vni": 120020,
      "type": "L2",
      "vlan": 20,
      "rd": "auto",
-     "route_target": "65120:120020"
+     "route_target": "65120:120020",
+     "subnet": "10.120.20.0/24",
+     "gateway": "10.120.20.1"
     },
     {
      "vni": 120030,
      "type": "L2",
      "vlan": 30,
      "rd": "auto",
-     "route_target": "65120:120030"
+     "route_target": "65120:120030",
+     "subnet": "10.120.30.0/24",
+     "gateway": "10.120.30.1"
     },
     {
      "vni": 120040,
      "type": "L2",
      "vlan": 40,
      "rd": "auto",
-     "route_target": "65120:120040"
+     "route_target": "65120:120040",
+     "subnet": "10.120.40.0/24",
+     "gateway": "10.120.40.1"
     },
     {
      "vni": 120100,
      "type": "L2",
      "vlan": 100,
      "rd": "auto",
-     "route_target": "65120:120100"
+     "route_target": "65120:120100",
+     "subnet": "10.120.100.0/24",
+     "gateway": "10.120.100.1"
     }
    ],
    "nve": {

@@ -30,6 +30,9 @@ EXPECTED = ROOT / "examples" / "demo" / "expected-state.json"
 def normalized(state):
     s = json.loads(json.dumps(state))
     s["bgp"]["sessions"].sort(key=lambda x: (x["vrf"], x["afi"], x["neighbor"]))
+    for key in ("routes", "hosts"):
+        if key in s:
+            s[key].sort(key=lambda x: json.dumps(x, sort_keys=True))
     return s
 
 

@@ -170,5 +170,202 @@
    "Ethernet1/51": "Up",
    "Ethernet1/52": "Up"
   }
- }
+ },
+ "routes": [
+  {
+   "vrf": "TRUST",
+   "prefix": "0.0.0.0/0",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.241.13",
+    "10.120.241.14"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.110.10.0/24",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.241.200"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.110.20.0/24",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.241.200"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.110.30.0/24",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.241.200"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.110.40.0/24",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.241.200"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.110.100.0/24",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.241.200"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.120.10.0/24",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.241.11",
+    "10.120.241.12",
+    "10.120.241.13",
+    "10.120.241.14"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.120.20.0/24",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.241.11",
+    "10.120.241.12",
+    "10.120.241.13",
+    "10.120.241.14"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.120.30.0/24",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.241.11",
+    "10.120.241.12",
+    "10.120.241.13",
+    "10.120.241.14"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.120.40.0/24",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.241.11",
+    "10.120.241.12",
+    "10.120.241.13",
+    "10.120.241.14"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.120.100.0/24",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.241.11",
+    "10.120.241.12",
+    "10.120.241.13",
+    "10.120.241.14"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.110.241.200/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.246.2",
+    "10.120.246.1"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.241.11/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.10",
+    "10.120.242.42"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.241.12/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.10",
+    "10.120.242.42"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.241.13/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.10",
+    "10.120.242.42"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.241.14/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.10",
+    "10.120.242.42"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.241.21/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.10",
+    "10.120.242.42"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.241.101/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.10",
+    "10.120.242.42"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.241.102/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.10",
+    "10.120.242.42"
+   ],
+   "encap": null
+  }
+ ]
 }

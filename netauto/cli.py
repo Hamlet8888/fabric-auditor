@@ -240,18 +240,20 @@ def _collect(args: argparse.Namespace, design: Design, source: StateSource) -> C
     return collector.collect(design.select(args.site))
 
 
+def _source(args: argparse.Namespace) -> Tuple[StateSource, str]:
+    """Snapshots from --state-dir (default: state/ next to --expected) or live NX-API with --source nxapi."""
+    if args.source == "nxapi":
+        return _nxapi_source(args), "live"
+    state_dir = Path(args.state_dir) if args.state_dir else Path(args.expected).resolve().parent / "state"
+    if not state_dir.is_dir():
+        raise DesignError(f"state directory not found: {state_dir}")
+    return SnapshotSource(state_dir), str(state_dir)
+
+
 def cmd_audit(args: argparse.Namespace, out: TextIO) -> int:
     design = _load(args)
     auditor = Auditor(design, args.step)
-    if args.source == "nxapi":
-        source = _nxapi_source(args)
-        where = "live"
-    else:
-        state_dir = Path(args.state_dir) if args.state_dir else Path(args.expected).resolve().parent / "state"
-        if not state_dir.is_dir():
-            raise DesignError(f"state directory not found: {state_dir}")
-        source, where = SnapshotSource(state_dir), str(state_dir)
-
+    source, where = _source(args)
     collection = _collect(args, design, source)
     report = auditor.audit(collection, site=args.site)
 
@@ -325,6 +327,40 @@ def cmd_diff(args: argparse.Namespace, out: TextIO) -> int:
     return EXIT_NONCOMPLIANT if kinds & failing else EXIT_OK
 
 
+def cmd_path(args: argparse.Namespace, out: TextIO) -> int:
+    from netauto import path
+
+    design = _load(args)
+    source, where = _source(args)
+    collection = _collect(args, design, source)
+    try:
+        result = path.trace(design, collection.states, args.src, args.dst)
+    except ValueError as exc:
+        raise DesignError(str(exc)) from None
+
+    if args.format == "json":
+        doc = result.to_dict()
+        doc["collection_errors"] = collection.errors
+        json.dump(doc, out, indent=2)
+        out.write("\n")
+    else:
+        style = Style(_use_color(args.color, out))
+        w = out.write
+        w(style("netauto path", "bold") + f"  {args.src} -> {args.dst}  "
+          + style(f"[{collection.source} ({where})]", "dim") + "\n\n")
+        for n, hop in enumerate(result.hops, 1):
+            mark = style("ok", "green") if hop.ok else style("BROKEN", "red", "bold")
+            w(f"{n:>2}. {hop.device:<16} {_pad(mark, 'ok' if hop.ok else 'BROKEN', 7)} {hop.action}\n")
+            for line in hop.detail:
+                w(style(f"{'':<28}{line}", "dim") + "\n")
+        verdict = {"delivered": style("delivered", "green"), "leaves fabric": style("leaves the fabric", "green"),
+                   "broken": style("broken", "red", "bold")}[result.result]
+        w(f"\nResult: {verdict}" + (f" at {result.hops[-1].device}" if not result.ok else "") + "\n")
+        for hostname, error in sorted(collection.errors.items()):
+            w(style(f"  not collected: {hostname}: {error}", "yellow") + "\n")
+    return EXIT_OK if result.ok else EXIT_NONCOMPLIANT
+
+
 def cmd_inventory(args: argparse.Namespace, out: TextIO) -> int:
     design = _load(args)
     render_inventory(design, args.site, Style(_use_color(args.color, out)), out)
@@ -358,14 +394,16 @@ def build_parser() -> argparse.ArgumentParser:
     live.add_argument("--timeout", type=float, default=30.0, metavar="SECONDS",
                       help="per-device collection timeout (default: 30)")
 
-    audit = sub.add_parser("audit", parents=[common, live], help="compare fabric state with the design",
+    snapshots = argparse.ArgumentParser(add_help=False)
+    snapshots.add_argument("--state-dir", metavar="DIR",
+                           help="directory of <hostname>.json state snapshots (default: state/ next to the "
+                                "expected-state file)")
+    snapshots.add_argument("--source", choices=("snapshots", "nxapi"), default="snapshots",
+                           help="where state comes from (default: snapshots)")
+
+    audit = sub.add_parser("audit", parents=[common, live, snapshots], help="compare fabric state with the design",
                            description="Run the links, BGP/BFD, EVPN RT/RD, VNI-to-VLAN, NVE/Multi-Site "
                                        "and vPC compliance checks.")
-    audit.add_argument("--state-dir", metavar="DIR",
-                       help="directory of <hostname>.json state snapshots (default: state/ next to the "
-                            "expected-state file)")
-    audit.add_argument("--source", choices=("snapshots", "nxapi"), default="snapshots",
-                       help="where state comes from (default: snapshots)")
     audit.add_argument("--step", metavar="ID", help="migration step the fabric has reached (default: the last)")
     audit.add_argument("--format", choices=("table", "json"), default="table", help="output format")
     audit.set_defaults(func=cmd_audit)
@@ -389,6 +427,14 @@ def build_parser() -> argparse.ArgumentParser:
     dif.add_argument("--color", choices=("auto", "always", "never"), default="auto",
                      help="colourize output (default: auto)")
     dif.set_defaults(func=cmd_diff)
+
+    pth = sub.add_parser("path", parents=[common, live, snapshots], help="explain how (or why not) A reaches B",
+                         description="Follow a packet from host SRC to DST through the fabric, switch by switch, "
+                                     "using each switch's host and route tables, and show where the path breaks.")
+    pth.add_argument("src", metavar="SRC", help="source host IP, e.g. 10.110.10.10")
+    pth.add_argument("dst", metavar="DST", help="destination IP: a host, or anything outside the fabric")
+    pth.add_argument("--format", choices=("table", "json"), default="table", help="output format")
+    pth.set_defaults(func=cmd_path)
 
     inv = sub.add_parser("inventory", parents=[common], help="show the devices and steps the design defines")
     inv.set_defaults(func=cmd_inventory)

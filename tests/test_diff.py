@@ -69,7 +69,10 @@ class TestDiff(unittest.TestCase):
         d = diff.diff_fabric(m4, m5)
         self.assertTrue(d)
         self.assertEqual({x.kind for x in d}, {diff.GAINED})
-        self.assertEqual({x.device for x in d}, {h.hostname for h in self.design.devices if h.role == "bgw"})
+        bgws = {h.hostname for h in self.design.devices if h.role == "bgw"}
+        self.assertTrue(bgws <= {x.device for x in d})
+        # Leafs gain only the other site's subnets, behind the local BGW VIP.
+        self.assertEqual({x.fact.split()[0] for x in d if x.device not in bgws}, {"route"})
 
     def test_routes_and_hosts_are_compared_when_present(self):
         self.before["DC1-NXLF-01"]["routes"] = [{"vrf": "TRUST", "prefix": "0.0.0.0/0", "next_hops": ["10.1.1.1"]}]
