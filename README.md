@@ -1,6 +1,6 @@
 # network-automation-tools
 
-Tools that check a running **BGP EVPN/VXLAN Multi-Site fabric** against its design. The design itself (the
+Tools that check and troubleshoot a running **BGP EVPN/VXLAN Multi-Site fabric** against its design. The design itself (the
 options, the address plan, the NX-OS and PAN-OS configs) lives in
 [network-design](https://github.com/Hamlet8888/network-design). This repository reads the
 `expected-state.json` that network-design writes next to the configs, compares it with the state collected from
@@ -14,6 +14,12 @@ python3 -m netauto.cli audit --expected examples/demo/expected-state.json --site
 python3 -m netauto.cli audit --expected examples/demo/expected-state.json --format json
 python3 -m netauto.cli inventory --expected examples/demo/expected-state.json             # what the design defines
 python3 -m netauto.cli audit --expected private/expected-state.json --source nxapi       # live switches
+
+# troubleshooting
+python3 -m netauto.cli diff examples/demo/state private/state/after                     # what a change broke
+python3 -m netauto.cli path 10.110.10.10 10.120.30.11 --expected examples/demo/expected-state.json
+python3 -m netauto.cli bgp --expected examples/demo/expected-state.json --site DC1       # down sessions and why
+python3 -m netauto.cli timeline --logs examples/demo/logs                                # what happened, in order
 ```
 
 Exit status: `0` compliant, `1` a check failed or a device's state could not be collected, `2` usage or input error.
@@ -53,6 +59,30 @@ and, for the legacy core, the step that removes it. `--step` audits the fabric a
 sessions of later steps may be configured but are not required, and retired ones must be gone. The default is
 the last step.
 
+## Troubleshooting commands
+
+All four read the same snapshots as `audit` (or the switches live with `--source nxapi`), print a table or
+`--format json`, and exit `1` when they find a problem, so they also work in scripts and change pipelines.
+
+| Command | Question it answers |
+|---|---|
+| `diff BEFORE AFTER` | What changed between two collections? Every fact (link, session, BFD, VNI, RT, vPC, NVE, Multi-Site, route, host) is **LOST**, **CHANGED** or **GAINED**. Collect before a change window and after it; `--fail-on lost\|changed\|any` makes it a gate |
+| `path SRC DST` | How does host A reach host B, or where does it break? Follows the packet switch by switch through the host (EVPN MAC-IP) and route tables: local delivery, VXLAN to the right VTEP or vPC anycast VTEP, the underlay route to it, the BGWs and DCI across sites, the firewall for anything outside |
+| `bgp` | Which sessions the design expects up at `--step` are down, and why: not configured, wrong AS on either end, no session back from the peer, link down at either end, MTU mismatch, BFD down, no underlay route to the peer loopback, DCI down. Sessions reset within the last hour are flagged too |
+| `timeline` | What happened, in what order? Merges link, BGP, BFD, vPC, NVE and MAC-move events from every switch's log and marks the first failure, which is usually the cause of the rest. `--since 30m`, `--device`, `--all` |
+
+A change window, end to end:
+
+```bash
+python3 -m netauto.cli collect --expected E --out private/state/before
+# ... the change ...
+python3 -m netauto.cli collect --expected E --out private/state/after --logs
+python3 -m netauto.cli diff private/state/before private/state/after          # anything LOST?
+python3 -m netauto.cli bgp --expected E --state-dir private/state/after       # why is that session down?
+python3 -m netauto.cli timeline --logs private/state/after --since 1h          # what went first?
+python3 -m netauto.cli path 10.110.10.10 10.120.30.11 --expected E --state-dir private/state/after
+```
+
 ## Layout
 
 | Path | Purpose |
@@ -62,10 +92,15 @@ the last step.
 | `netauto/nxapi.py` | NX-API JSON-RPC client and `NxapiSource`, the live collector |
 | `netauto/nxos.py` | NX-OS show-command and running-config parsers into the state schema |
 | `netauto/auditor.py` | `Auditor`: the six checks and the vPC pair comparison, returning an `AuditReport` |
+| `netauto/diff.py` | `netauto diff`: flattens two collections into facts and classifies each difference |
+| `netauto/path.py` | `netauto path`: the hop-by-hop packet trace through host and route tables |
+| `netauto/bgp.py` | `netauto bgp`: the BGP session doctor |
+| `netauto/timeline.py` | `netauto timeline`: NX-OS log parser and merged event timeline |
 | `netauto/cli.py` | `argparse` CLI with colourized per-site tables or JSON |
 | `netauto/mock.py` | Synthesizes compliant state snapshots from the expected state, at any step |
 | `examples/demo/expected-state.json` | The fictional DC1/DC2 demo fabric, as network-design writes it |
 | `examples/demo/state/` | Compliant snapshots of every demo switch at the last step |
+| `examples/demo/logs/` | Sample switch logs of a link failure and its recovery, for `timeline` |
 
 ## Live switches (NX-API)
 
@@ -79,8 +114,8 @@ python3 -m netauto.cli audit   --expected private/expected-state.json --source n
 python3 -m netauto.cli collect --expected private/expected-state.json --out private/state/2026-10-23 --raw
 ```
 
-`collect` saves the normalized snapshots (audit them later with `--state-dir`) and, with `--raw`, every raw NX-API
-answer under `raw/`. Keep both in `private/`, which git ignores.
+`collect` saves the normalized snapshots (audit them later with `--state-dir`), with `--raw` every raw NX-API
+answer under `raw/`, and with `--logs` each switch's `show logging logfile` under `logs/` for `timeline`. Keep both in `private/`, which git ignores.
 
 | Option | Use |
 |---|---|
@@ -94,7 +129,8 @@ role (`network-operator`) is enough: only show commands are sent.
 
 Per switch, the collector runs `show interface`, `show bgp ipv4 unicast summary vrf all`, `show bgp l2vpn evpn
 summary`, `show bfd neighbors vrf all` and `show running-config`; on VTEPs also `show nve vni`, `show nve interface
-nve1 detail` and the EVPN route distinguishers; `show vpc brief` on leafs and `show nve multisite fabric-links` /
+nve1 detail`, the EVPN route distinguishers and `show ip route vrf all`; `show vpc brief` and `show l2route evpn
+mac-ip all` on leafs and `show nve multisite fabric-links` /
 `dci-links` on BGWs. Route targets, the vPC keepalive destination and the Multi-Site site ID come from the
 running-config.
 

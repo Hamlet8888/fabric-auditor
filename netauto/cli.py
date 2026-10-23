@@ -12,16 +12,21 @@ network-automation-tools command-line interface.
 
     # troubleshooting
     python3 -m netauto.cli diff private/state/before private/state/after
+    python3 -m netauto.cli path 10.110.10.10 10.120.30.11 --expected examples/demo/expected-state.json
+    python3 -m netauto.cli bgp --expected examples/demo/expected-state.json --site DC1
+    python3 -m netauto.cli timeline --logs examples/demo/logs --since 30m
 
 ``--expected`` is the ``expected-state.json`` that network-design writes next to the
 configs. ``audit`` loads state from ``--state-dir`` (default: ``state/`` next to that
 file) or, with ``--source nxapi``, from the switches themselves; runs the compliance checks at ``--step`` (default: the last migration step) and
 prints a status table per site, followed by every mismatch with its expected and actual
 value. ``collect`` saves live state as snapshots (and, with ``--raw``, the raw NX-API
-output) to audit later or offline.
+output, and with ``--logs`` the switch logs) to audit later or offline. ``diff``, ``path``,
+``bgp`` and ``timeline`` are the troubleshooting commands; see their ``--help``.
 
-Exit status: 0 when everything audited is compliant, 1 when any check fails or a device's
-state could not be collected, 2 for usage or input errors.
+Exit status: 0 when everything audited is compliant (or, for the troubleshooting commands,
+nothing is wrong), 1 when any check fails, a problem is found or a device's state could not be
+collected, 2 for usage or input errors.
 
 Colour is used when stdout is a terminal, unless ``NO_COLOR`` is set or ``--color never``
 is given.
@@ -513,7 +518,7 @@ def cmd_inventory(args: argparse.Namespace, out: TextIO) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="netauto",
-        description="Check a BGP EVPN/VXLAN fabric against the expected state from network-design.",
+        description="Check and troubleshoot a BGP EVPN/VXLAN fabric against the expected state from network-design.",
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", metavar="COMMAND")
