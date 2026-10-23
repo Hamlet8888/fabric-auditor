@@ -112,6 +112,7 @@ class Device:
     nve: Optional[Nve] = None
     vpc: Optional[Vpc] = None
     multisite: Optional[Multisite] = None
+    mgmt: Optional[str] = None  # mgmt0 address: where collectors connect
 
     @property
     def is_vtep(self) -> bool:
@@ -234,6 +235,7 @@ def _device(d: Dict[str, Any]) -> Device:
         vpc=Vpc(int(vpc["domain"]), vpc["peer"], vpc["keepalive"], vpc["peer_link"]) if vpc else None,
         multisite=Multisite(int(ms["site_id"]), ms["vip"], tuple(ms["fabric_links"]), tuple(ms["dci_links"]))
         if ms else None,
+        mgmt=d.get("mgmt"),
     )
 
 
