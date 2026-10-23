@@ -40,6 +40,7 @@ SHOW_MS_FABRIC = "show nve multisite fabric-links"
 SHOW_MS_DCI = "show nve multisite dci-links"
 SHOW_ROUTE = "show ip route vrf all"
 SHOW_L2ROUTE = "show l2route evpn mac-ip all"
+SHOW_LOG = "show logging logfile"  # netauto timeline; not part of the state
 
 #: Commands whose output is plain text (NX-API ``cli_ascii``); the rest are JSON (``cli``).
 ASCII = {SHOW_RUN, SHOW_EVPN_RD, SHOW_MS_FABRIC, SHOW_MS_DCI}

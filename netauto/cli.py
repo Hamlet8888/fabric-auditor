@@ -34,8 +34,9 @@ import getpass
 import json
 import os
 import sys
+from datetime import timedelta
 from pathlib import Path
-from typing import List, Optional, Sequence, TextIO, Tuple
+from typing import Dict, List, Optional, Sequence, TextIO, Tuple
 
 from netauto import __version__
 from netauto.auditor import (CHECK_COLLECTION, CHECK_TITLES, CHECKS, ERROR, FAIL, PASS, SKIP,
@@ -282,9 +283,24 @@ def cmd_collect(args: argparse.Namespace, out: TextIO) -> int:
         for hostname, raw in sorted(source.raw.items()):  # type: ignore[attr-defined]
             (raw_dir / f"{hostname}.json").write_text(json.dumps(raw, indent=1) + "\n", encoding="utf-8")
     out.write(f"wrote {len(collection.states)} snapshots to {target}\n")
-    for hostname, error in sorted(collection.errors.items()):
+    errors = dict(collection.errors)
+    if args.logs:
+        import asyncio
+
+        from netauto.nxapi import collect_logs
+
+        logs, log_errors = asyncio.run(collect_logs(source, design.select(args.site),  # type: ignore[arg-type]
+                                                    args.concurrency, args.timeout))
+        log_dir = target / "logs"
+        log_dir.mkdir(exist_ok=True)
+        for hostname, text in sorted(logs.items()):
+            (log_dir / f"{hostname}.log").write_text(text, encoding="utf-8")
+        out.write(f"wrote {len(logs)} logs to {log_dir}\n")
+        for hostname, error in log_errors.items():
+            errors.setdefault(hostname, f"log: {error}")
+    for hostname, error in sorted(errors.items()):
         out.write(f"  {hostname}: {error}\n")
-    return EXIT_OK if collection.ok else EXIT_NONCOMPLIANT
+    return EXIT_OK if not errors else EXIT_NONCOMPLIANT
 
 
 def cmd_diff(args: argparse.Namespace, out: TextIO) -> int:
@@ -415,6 +431,79 @@ def cmd_bgp(args: argparse.Namespace, out: TextIO) -> int:
     return EXIT_NONCOMPLIANT if failed else EXIT_OK
 
 
+def cmd_timeline(args: argparse.Namespace, out: TextIO) -> int:
+    from netauto import timeline
+
+    devices = args.device
+    if args.expected:
+        design = _load(args)
+        site_hosts = [d.hostname for d in design.select(args.site)]
+        devices = [h for h in site_hosts if not args.device or h in args.device]
+    elif args.site or args.source == "nxapi":
+        raise DesignError("--site and --source nxapi need --expected to know the switches")
+    errors: Dict[str, str] = {}
+    if args.source == "nxapi":
+        import asyncio
+
+        from netauto.nxapi import collect_logs
+
+        source = _nxapi_source(args)
+        targets = [design.device(h) for h in devices]
+        logs, errors = asyncio.run(collect_logs(source, targets, args.concurrency, args.timeout))  # type: ignore
+        where = "live"
+    else:
+        if not args.logs:
+            raise DesignError("give --logs DIR (from `netauto collect --logs`) or --source nxapi")
+        try:
+            logs = timeline.load_logs(args.logs)
+        except ValueError as exc:
+            raise DesignError(str(exc)) from None
+        where = str(args.logs)
+    try:
+        tl = timeline.build(logs, devices, args.since, args.until, args.all)
+    except ValueError as exc:
+        raise DesignError(str(exc)) from None
+
+    if args.format == "json":
+        doc = tl.to_dict()
+        doc["collection_errors"] = errors
+        json.dump(doc, out, indent=2)
+        out.write("\n")
+        return EXIT_NONCOMPLIANT if tl.first_failure else EXIT_OK
+
+    style = Style(_use_color(args.color, out))
+    colour = {timeline.DOWN: ("red", "bold"), timeline.WARN: ("yellow",), timeline.UP: ("green",),
+              timeline.INFO: ("dim",)}
+    w = out.write
+    span = f", {tl.events[0].time:%Y-%m-%d %H:%M:%S} to {tl.events[-1].time:%Y-%m-%d %H:%M:%S}" if tl.events else ""
+    w(style("netauto timeline", "bold") + f"  {len(tl.events)} events from {len(tl.devices)} switches{span}  "
+      + style(f"[{where}]", "dim") + "\n")
+    day = None
+    width = max((len(e.device) for e in tl.events), default=0)
+    for e in tl.events:
+        if e.time.date() != day:
+            day = e.time.date()
+            w(f"\n{day:%Y-%m-%d}\n")
+        mark = style(f"{e.kind.upper():<4}", *colour[e.kind])
+        first = style(" <- first failure", "red", "bold") if e is tl.first_failure else ""
+        w(f"  {e.time:%H:%M:%S}  {e.device:<{width}}  {mark}  {e.message}" + style(f"  [{e.tag}]", "dim")
+          + first + "\n")
+    if not tl.events:
+        w("\nNo events" + (" (use --all to see every log line)" if not args.all else "") + ".\n")
+    if tl.first_failure:
+        f = tl.first_failure
+        after = [e for e in tl.events if f.time <= e.time <= f.time + timedelta(seconds=args.window)
+                 and e is not f and e.kind in (timeline.DOWN, timeline.WARN)]
+        w("\n" + style("First failure: ", "bold") + f"{f.time:%Y-%m-%d %H:%M:%S} {f.device}: {f.message}\n")
+        if after:
+            hosts = sorted({e.device for e in after})
+            w(f"  followed within {args.window}s by {len(after)} more failure(s) on {', '.join(hosts)}: "
+              "most likely consequences of it\n")
+    for hostname, error in sorted(errors.items()):
+        w(style(f"  not collected: {hostname}: {error}", "yellow") + "\n")
+    return EXIT_NONCOMPLIANT if tl.first_failure else EXIT_OK
+
+
 def cmd_inventory(args: argparse.Namespace, out: TextIO) -> int:
     design = _load(args)
     render_inventory(design, args.site, Style(_use_color(args.color, out)), out)
@@ -466,6 +555,8 @@ def build_parser() -> argparse.ArgumentParser:
                              description="Collect every switch over NX-API and write <hostname>.json snapshots.")
     collect.add_argument("--out", required=True, metavar="DIR", help="folder for the snapshots")
     collect.add_argument("--raw", action="store_true", help="also save the raw NX-API output under DIR/raw/")
+    collect.add_argument("--logs", action="store_true",
+                         help="also save each switch's `show logging logfile` under DIR/logs/ (for `netauto timeline`)")
     collect.set_defaults(func=cmd_collect)
 
     dif = sub.add_parser("diff", help="compare two state snapshots (before/after a change)",
@@ -499,6 +590,26 @@ def build_parser() -> argparse.ArgumentParser:
     bg.add_argument("--all", action="store_true", help="also list the sessions that are fine")
     bg.add_argument("--format", choices=("table", "json"), default="table", help="output format")
     bg.set_defaults(func=cmd_bgp)
+
+    tln = sub.add_parser("timeline", parents=[live], help="merge the switches' logs into one event timeline",
+                         description="Merge link, BGP, BFD, vPC, NVE and MAC-move events from every switch's log "
+                                     "into one timeline and point at the first failure.")
+    tln.add_argument("--logs", metavar="DIR", help="folder of <hostname>.log files (from `netauto collect --logs`)")
+    tln.add_argument("--expected", metavar="FILE", help="expected-state.json (needed for --source nxapi and --site)")
+    tln.add_argument("--source", choices=("logs", "nxapi"), default="logs",
+                     help="read --logs, or fetch `show logging logfile` live (default: logs)")
+    tln.add_argument("--site", metavar="CODE", help="limit to one site (needs --expected)")
+    tln.add_argument("--device", action="append", metavar="HOSTNAME", help="only this switch (repeatable)")
+    tln.add_argument("--since", metavar="WHEN", help="from this time: '2026-10-23 14:00', or 30m / 2h / 1d before "
+                                                     "the newest log line")
+    tln.add_argument("--until", metavar="WHEN", help="up to this time (same forms as --since)")
+    tln.add_argument("--window", type=_positive_int, default=60, metavar="SECONDS",
+                     help="failures this soon after the first one count as its consequences (default: 60)")
+    tln.add_argument("--all", action="store_true", help="keep every log line, not only the events that matter")
+    tln.add_argument("--format", choices=("table", "json"), default="table", help="output format")
+    tln.add_argument("--color", choices=("auto", "always", "never"), default="auto",
+                     help="colourize output (default: auto)")
+    tln.set_defaults(func=cmd_timeline)
 
     inv = sub.add_parser("inventory", parents=[common], help="show the devices and steps the design defines")
     inv.set_defaults(func=cmd_inventory)

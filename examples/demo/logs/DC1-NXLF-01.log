@@ -1,0 +1,9 @@
+2026 Oct 23 06:00:01 DC1-NXLF-01 %AUTHPRIV-6-SYSTEM_MSG: pam_unix(dcos_sshd:session): session opened for user netops - dcos_sshd[22411]
+2026 Oct 23 13:41:07 DC1-NXLF-01 %ETHPORT-5-IF_DOWN_LINK_FAILURE: Interface Ethernet1/49 is down (Link failure)
+2026 Oct 23 13:41:07 DC1-NXLF-01 %BFD-5-SESSION_STATE_DOWN: BFD session 1090519045 to neighbor 10.110.242.0 on interface Eth1/49 has gone down. Reason: Path Down.
+2026 Oct 23 13:41:07 DC1-NXLF-01 %BGP-5-ADJCHANGE:  bgp- [8121] (default) neighbor 10.110.242.0 Down - bfd session down
+2026 Oct 23 13:44:08 DC1-NXLF-01 %BGP-5-ADJCHANGE:  bgp- [8121] (default) neighbor 10.110.240.1 Down - holdtimer expired error
+2026 Oct 23 13:52:30 DC1-NXLF-01 %ETHPORT-5-IF_UP: Interface Ethernet1/49 is up in mode routed
+2026 Oct 23 13:52:31 DC1-NXLF-01 %BFD-5-SESSION_STATE_UP: BFD session 1090519045 to neighbor 10.110.242.0 on interface Eth1/49 is up.
+2026 Oct 23 13:52:34 DC1-NXLF-01 %BGP-5-ADJCHANGE:  bgp- [8121] (default) neighbor 10.110.242.0 Up
+2026 Oct 23 13:52:41 DC1-NXLF-01 %BGP-5-ADJCHANGE:  bgp- [8121] (default) neighbor 10.110.240.1 Up

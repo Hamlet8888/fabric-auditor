@@ -204,6 +204,32 @@ class TestLiveCli(unittest.TestCase):
                         out=io.StringIO())
         self.assertEqual(code, cli.EXIT_OK)
 
+    def test_live_path_and_bgp(self):
+        code, text = self.run_cli("path", "10.110.10.10", "10.120.30.11", "--source", "nxapi")
+        self.assertEqual(code, cli.EXIT_OK, text)
+        self.assertIn("Result: delivered", text)
+        code, text = self.run_cli("bgp", "--source", "nxapi", "--site", "DC2", "--format", "json")
+        self.assertEqual(code, cli.EXIT_OK, text)
+        summary = json.loads(text)["summary"]
+        self.assertEqual((summary["down"], summary["missing"]), (0, 0))
+        self.assertGreater(summary["ok"], 0)
+
+    def test_collect_logs_then_timeline_offline_and_live(self):
+        for h, raw in self.outputs.items():
+            log = ROOT / "examples" / "demo" / "logs" / f"{h}.log"
+            raw[nxos.SHOW_LOG] = log.read_text() if log.exists() else ""
+        out_dir = Path(self.tmp.name, "state")
+        code, text = self.run_cli("collect", "--out", str(out_dir), "--logs", "--site", "DC1")
+        self.assertEqual(code, cli.EXIT_OK, text)
+        self.assertEqual(len(list((out_dir / "logs").glob("*.log"))), len(self.design.select("DC1")))
+        out = io.StringIO()
+        self.assertEqual(cli.main(["timeline", "--logs", str(out_dir), "--color", "never"], out=out),
+                         cli.EXIT_NONCOMPLIANT)
+        self.assertIn("First failure: 2026-10-23 13:41:07 DC1-NXLF-01", out.getvalue())
+        code, text = self.run_cli("timeline", "--source", "nxapi", "--device", "DC1-NXLF-03", "--format", "json")
+        self.assertEqual(code, cli.EXIT_OK, text)
+        self.assertEqual(json.loads(text)["summary"]["warn"], 2)
+
     def test_missing_credentials_without_a_terminal(self):
         with patch.patch.dict(os.environ, {"NETAUTO_PASSWORD": ""}), \
                 patch.patch("sys.stdin", io.StringIO()):

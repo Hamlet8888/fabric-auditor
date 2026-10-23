@@ -28,7 +28,7 @@ import ssl
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from netauto import nxos
 from netauto.collector import StateError, StateSource
@@ -129,3 +129,25 @@ class NxapiSource(StateSource):
             self.raw[device.hostname] = raw
         stamp = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
         return nxos.parse(device, raw, collected_at=stamp)
+
+
+async def collect_logs(source: NxapiSource, devices: Sequence[Device], concurrency: int = 16,
+                       timeout: float = 60.0) -> Tuple[Dict[str, str], Dict[str, str]]:
+    """``show logging logfile`` from each switch: ({hostname: log text}, {hostname: error})."""
+    sem = asyncio.Semaphore(concurrency)
+    logs: Dict[str, str] = {}
+    errors: Dict[str, str] = {}
+
+    async def one(device: Device) -> None:
+        async with sem:
+            try:
+                client = source.client(device)
+                out = await asyncio.wait_for(asyncio.to_thread(client.run, [nxos.SHOW_LOG], [nxos.SHOW_LOG]), timeout)
+                logs[device.hostname] = str(out[nxos.SHOW_LOG])
+            except asyncio.TimeoutError:
+                errors[device.hostname] = f"timed out after {timeout:g}s"
+            except StateError as exc:
+                errors[device.hostname] = str(exc)
+
+    await asyncio.gather(*(one(d) for d in devices))
+    return logs, errors
