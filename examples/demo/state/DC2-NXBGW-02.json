@@ -1,0 +1,174 @@
+{
+ "schema_version": 2,
+ "hostname": "DC2-NXBGW-02",
+ "collected_at": "2026-10-23T14:00:00Z",
+ "platform": "nxos",
+ "interfaces": {
+  "mgmt0": {
+   "mtu": 1500,
+   "oper_status": "up"
+  },
+  "loopback0": {
+   "mtu": 1500,
+   "oper_status": "up"
+  },
+  "Ethernet1/49": {
+   "mtu": 9216,
+   "oper_status": "up"
+  },
+  "Ethernet1/50": {
+   "mtu": 9216,
+   "oper_status": "up"
+  },
+  "Ethernet1/51": {
+   "mtu": 9216,
+   "oper_status": "up"
+  },
+  "Ethernet1/52": {
+   "mtu": 9216,
+   "oper_status": "up"
+  }
+ },
+ "bgp": {
+  "router_id": "10.120.240.22",
+  "local_as": 65226,
+  "sessions": [
+   {
+    "vrf": "default",
+    "afi": "ipv4",
+    "neighbor": "10.120.242.10",
+    "remote_as": 65220,
+    "state": "Established"
+   },
+   {
+    "vrf": "default",
+    "afi": "evpn",
+    "neighbor": "10.120.240.1",
+    "remote_as": 65220,
+    "state": "Established"
+   },
+   {
+    "vrf": "default",
+    "afi": "ipv4",
+    "neighbor": "10.120.242.42",
+    "remote_as": 65220,
+    "state": "Established"
+   },
+   {
+    "vrf": "default",
+    "afi": "evpn",
+    "neighbor": "10.120.240.2",
+    "remote_as": 65220,
+    "state": "Established"
+   },
+   {
+    "vrf": "default",
+    "afi": "ipv4",
+    "neighbor": "10.110.246.2",
+    "remote_as": 65216,
+    "state": "Established"
+   },
+   {
+    "vrf": "default",
+    "afi": "ipv4",
+    "neighbor": "10.120.246.1",
+    "remote_as": 65215,
+    "state": "Established"
+   },
+   {
+    "vrf": "default",
+    "afi": "evpn",
+    "neighbor": "10.110.240.21",
+    "remote_as": 65215,
+    "state": "Established"
+   },
+   {
+    "vrf": "default",
+    "afi": "evpn",
+    "neighbor": "10.110.240.22",
+    "remote_as": 65216,
+    "state": "Established"
+   },
+   {
+    "vrf": "TRUST",
+    "afi": "ipv4",
+    "neighbor": "10.120.244.10",
+    "remote_as": 64512,
+    "state": "Established"
+   },
+   {
+    "vrf": "TRUST",
+    "afi": "ipv4",
+    "neighbor": "10.120.244.22",
+    "remote_as": 12076,
+    "state": "Established"
+   }
+  ]
+ },
+ "bfd": [
+  {
+   "neighbor": "10.120.242.10",
+   "state": "Up"
+  },
+  {
+   "neighbor": "10.120.242.42",
+   "state": "Up"
+  },
+  {
+   "neighbor": "10.110.246.2",
+   "state": "Up"
+  },
+  {
+   "neighbor": "10.120.246.1",
+   "state": "Up"
+  },
+  {
+   "neighbor": "10.120.244.10",
+   "state": "Up"
+  },
+  {
+   "neighbor": "10.120.244.22",
+   "state": "Up"
+  }
+ ],
+ "evpn": {
+  "vnis": [
+   {
+    "vni": 50010,
+    "rd": "10.120.240.22:3",
+    "rt_import": [
+     "65000:50010"
+    ],
+    "rt_export": [
+     "65000:50010"
+    ]
+   }
+  ]
+ },
+ "vni_map": [
+  {
+   "vni": 50010,
+   "type": "L3",
+   "vrf": "TRUST",
+   "state": "Up"
+  }
+ ],
+ "nve": {
+  "state": "Up",
+  "source_interface": "loopback1",
+  "primary": "10.120.241.22",
+  "secondary": null
+ },
+ "multisite": {
+  "site_id": 120,
+  "vip": "10.120.241.200",
+  "fabric_links": {
+   "Ethernet1/49": "Up",
+   "Ethernet1/50": "Up"
+  },
+  "dci_links": {
+   "Ethernet1/51": "Up",
+   "Ethernet1/52": "Up"
+  }
+ }
+}
