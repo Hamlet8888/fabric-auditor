@@ -50,7 +50,7 @@ def device_state(design: Design, device: Device, step: Optional[str] = None) -> 
             neighbor = f"192.0.2.{placeholders}"
         up = design.active(s, step)
         sessions.append({"vrf": s.vrf, "afi": s.afi, "neighbor": neighbor, "remote_as": s.remote_as,
-                         "state": "Established" if up else "Idle"})
+                         "state": "Established" if up else "Idle", "uptime": "3w2d" if up else "never"})
         if s.bfd:
             bfd.append({"neighbor": neighbor, "state": "Up" if up else "Down"})
 
@@ -180,16 +180,17 @@ def routes(design: Design, device: Device, step: str, sessions: List[Dict[str, A
     elif any(design.active(s, step) for b in border for s in b.sessions if s.vrf == vrf):
         add(vrf, "0.0.0.0/0", sorted(d.nve.primary for d in border), encap="vxlan")
 
-    # Underlay: every VTEP address in the site, and the other site's VIP on the BGWs over the DCI.
+    # Underlay: every loopback and VTEP address in the site, and the other site's VIP on the BGWs over the DCI.
     def far_end(iface) -> str:
         net = ipaddress.ip_interface(iface.address)
         return next(str(a) for a in ([net.network.network_address, net.network.broadcast_address]
                                      if net.network.prefixlen == 31 else net.network.hosts()) if a != net.ip)
 
     uplinks = sorted(far_end(i) for i in device.interfaces if not i.dci_carrier and not i.name.startswith("Vlan"))
-    own = {device.nve.primary, device.nve.secondary, device.multisite.vip if device.multisite else None}
-    for d in leafs + bgws:
-        for addr in sorted({d.nve.primary, d.nve.secondary, d.multisite.vip if d.multisite else None} - {None}):
+    own = {device.router_id, device.nve.primary, device.nve.secondary, device.multisite.vip if device.multisite else None}
+    for d in design.select(site):
+        addrs = {d.router_id} | ({d.nve.primary, d.nve.secondary} if d.nve else set())
+        for addr in sorted((addrs | {d.multisite.vip if d.multisite else None}) - {None}):
             if addr in own:
                 continue
             if not any(r["prefix"] == f"{addr}/32" for r in out):

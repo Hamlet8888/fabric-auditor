@@ -46,84 +46,96 @@
     "afi": "ipv4",
     "neighbor": "10.120.242.1",
     "remote_as": 65221,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.120.240.11",
     "remote_as": 65221,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "ipv4",
     "neighbor": "10.120.242.3",
     "remote_as": 65222,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.120.240.12",
     "remote_as": 65222,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "ipv4",
     "neighbor": "10.120.242.5",
     "remote_as": 65223,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.120.240.13",
     "remote_as": 65223,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "ipv4",
     "neighbor": "10.120.242.7",
     "remote_as": 65224,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.120.240.14",
     "remote_as": 65224,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "ipv4",
     "neighbor": "10.120.242.9",
     "remote_as": 65225,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.120.240.21",
     "remote_as": 65225,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "ipv4",
     "neighbor": "10.120.242.11",
     "remote_as": 65226,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.120.240.22",
     "remote_as": 65226,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    }
   ]
  },

@@ -68,7 +68,7 @@ def bgp_summary(state: Dict[str, Any], afi: str) -> Dict[str, Any]:
     rows = []
     for vrf in vrfs:
         nbrs = [{"neighborid": s["neighbor"], "neighborversion": "4", "msgrecvd": "100", "msgsent": "100",
-                 "neighboras": str(s["remote_as"]), "time": "21w0d",
+                 "neighboras": str(s["remote_as"]), "time": s.get("uptime", "21w0d"),
                  "state": s["state"], "prefixreceived": "3"}
                 for s in sessions if s["vrf"] == vrf]
         saf = {"safi": "1" if afi == "ipv4" else "70", "af-name": "IPv4 Unicast" if afi == "ipv4" else "L2VPN EVPN"}

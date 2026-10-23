@@ -22,7 +22,7 @@ Normalized device state (schema version 2)::
         "local_as": 65213,
         "sessions": [
           {"vrf": "default", "afi": "ipv4", "neighbor": "10.110.242.4",
-           "remote_as": 65210, "state": "Established"}
+           "remote_as": 65210, "state": "Established", "uptime": "3w2d"}   # uptime optional
         ]
       },
       "bfd": [{"neighbor": "10.110.242.4", "state": "Up"}],      # show bfd neighbors

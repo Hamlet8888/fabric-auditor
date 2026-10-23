@@ -207,6 +207,8 @@ def parse_bgp(out: Any, afi: str, bgp: Dict[str, Any]) -> None:
                         "remote_as": _int(n.get("neighboras")),
                         # NX-OS shows a prefix count instead of a state once a session is up.
                         "state": "Established" if state.isdigit() else state,
+                        # Up/down time: how long the session has been in its current state.
+                        **({"uptime": str(n["time"])} if n.get("time") else {}),
                     })
 
 

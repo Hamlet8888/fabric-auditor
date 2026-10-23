@@ -34,42 +34,48 @@
     "afi": "ipv4",
     "neighbor": "10.110.242.6",
     "remote_as": 65210,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.110.240.1",
     "remote_as": 65210,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "ipv4",
     "neighbor": "10.110.242.38",
     "remote_as": 65210,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.110.240.2",
     "remote_as": 65210,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "ipv4",
     "neighbor": "10.110.243.13",
     "remote_as": 65213,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "TRUST",
     "afi": "ipv4",
     "neighbor": "10.110.244.73",
     "remote_as": 65217,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    }
   ]
  },
@@ -307,6 +313,76 @@
     "10.110.241.200"
    ],
    "encap": "vxlan"
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.110.240.1/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.242.38",
+    "10.110.242.6"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.110.240.2/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.242.38",
+    "10.110.242.6"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.110.240.11/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.242.38",
+    "10.110.242.6"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.110.240.12/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.242.38",
+    "10.110.242.6"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.110.240.13/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.242.38",
+    "10.110.242.6"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.110.240.21/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.242.38",
+    "10.110.242.6"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.110.240.22/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.242.38",
+    "10.110.242.6"
+   ],
+   "encap": null
   },
   {
    "vrf": "default",

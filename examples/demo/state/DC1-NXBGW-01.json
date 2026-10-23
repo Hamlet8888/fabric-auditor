@@ -38,70 +38,80 @@
     "afi": "ipv4",
     "neighbor": "10.110.242.8",
     "remote_as": 65210,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.110.240.1",
     "remote_as": 65210,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "ipv4",
     "neighbor": "10.110.242.40",
     "remote_as": 65210,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.110.240.2",
     "remote_as": 65210,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "ipv4",
     "neighbor": "10.110.246.1",
     "remote_as": 65225,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "ipv4",
     "neighbor": "10.120.246.0",
     "remote_as": 65226,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.120.240.21",
     "remote_as": 65225,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.120.240.22",
     "remote_as": 65226,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "TRUST",
     "afi": "ipv4",
     "neighbor": "10.110.244.2",
     "remote_as": 64512,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "TRUST",
     "afi": "ipv4",
     "neighbor": "10.110.244.18",
     "remote_as": 12076,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    }
   ]
  },
@@ -286,6 +296,76 @@
     "10.120.241.200"
    ],
    "encap": "vxlan"
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.110.240.1/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.242.40",
+    "10.110.242.8"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.110.240.2/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.242.40",
+    "10.110.242.8"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.110.240.11/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.242.40",
+    "10.110.242.8"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.110.240.12/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.242.40",
+    "10.110.242.8"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.110.240.13/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.242.40",
+    "10.110.242.8"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.110.240.14/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.242.40",
+    "10.110.242.8"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.110.240.22/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.110.242.40",
+    "10.110.242.8"
+   ],
+   "encap": null
   },
   {
    "vrf": "default",

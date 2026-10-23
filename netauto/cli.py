@@ -361,6 +361,60 @@ def cmd_path(args: argparse.Namespace, out: TextIO) -> int:
     return EXIT_OK if result.ok else EXIT_NONCOMPLIANT
 
 
+def cmd_bgp(args: argparse.Namespace, out: TextIO) -> int:
+    from netauto import bgp
+
+    design = _load(args)
+    if args.step:
+        design.check_step(args.step)
+    devices = design.select(args.site)
+    if args.device:
+        devices = [d for d in devices if d.hostname in args.device]
+        unknown = set(args.device) - {d.hostname for d in devices}
+        if unknown:
+            raise DesignError(f"not in the design{' at site ' + args.site if args.site else ''}: "
+                              f"{', '.join(sorted(unknown))}")
+    source, where = _source(args)
+    # The peers' side matters too, so collect every switch the selected ones peer with.
+    peers = {s.peer for d in devices for s in d.sessions}
+    targets = [d for d in design.devices if d in devices or d.hostname in peers]
+    collector = FabricCollector(design, source, concurrency=args.concurrency, timeout=args.timeout)
+    collection = collector.collect(targets)
+    findings = bgp.Doctor(design, collection.states, args.step).examine(devices)
+    failed = [f for f in findings if f.status in (bgp.MISSING, bgp.DOWN)]
+
+    if args.format == "json":
+        doc = bgp.to_dict(findings)
+        doc["collection_errors"] = collection.errors
+        json.dump(doc, out, indent=2)
+        out.write("\n")
+    else:
+        style = Style(_use_color(args.color, out))
+        colour = {bgp.MISSING: ("red", "bold"), bgp.DOWN: ("red", "bold"), bgp.FLAPPED: ("yellow",),
+                  bgp.OK: ("green",)}
+        w = out.write
+        w(style("netauto bgp", "bold") + f"  step {args.step or design.final_step}  "
+          + style(f"[{collection.source} ({where})]", "dim") + "\n\n")
+        shown = [f for f in findings if args.all or f.status != bgp.OK]
+        if not shown:
+            w(f"All {len(findings)} sessions the design expects up are Established.\n")
+        for f in shown:
+            label = f.status.upper()
+            w(f"{f.device:<16} -> {f.peer:<20} {f.vrf}/{f.afi} {f.neighbor}  "
+              + style(label, *colour[f.status])
+              + (f" ({f.state}{', ' + f.uptime if f.uptime and f.uptime != 'never' else ''})" if f.state else "")
+              + "\n")
+            for c in f.causes:
+                w(f"    - {c}\n")
+            if f.causes:
+                w("\n")
+        counts = ", ".join(f"{sum(1 for f in findings if f.status == k)} {k}" for k in bgp.STATUSES)
+        w(f"\nSummary: {counts}\n")
+        for hostname, error in sorted(collection.errors.items()):
+            w(style(f"  not collected: {hostname}: {error}", "yellow") + "\n")
+    return EXIT_NONCOMPLIANT if failed else EXIT_OK
+
+
 def cmd_inventory(args: argparse.Namespace, out: TextIO) -> int:
     design = _load(args)
     render_inventory(design, args.site, Style(_use_color(args.color, out)), out)
@@ -435,6 +489,16 @@ def build_parser() -> argparse.ArgumentParser:
     pth.add_argument("dst", metavar="DST", help="destination IP: a host, or anything outside the fabric")
     pth.add_argument("--format", choices=("table", "json"), default="table", help="output format")
     pth.set_defaults(func=cmd_path)
+
+    bg = sub.add_parser("bgp", parents=[common, live, snapshots], help="find down BGP sessions and why",
+                        description="Check every BGP session the design expects up at --step from both ends, and "
+                                    "for each one that is down, list the likely causes: config, AS numbers, links, "
+                                    "MTU, BFD, underlay reachability, the DCI.")
+    bg.add_argument("--step", metavar="ID", help="migration step the fabric has reached (default: the last)")
+    bg.add_argument("--device", action="append", metavar="HOSTNAME", help="only this switch (repeatable)")
+    bg.add_argument("--all", action="store_true", help="also list the sessions that are fine")
+    bg.add_argument("--format", choices=("table", "json"), default="table", help="output format")
+    bg.set_defaults(func=cmd_bgp)
 
     inv = sub.add_parser("inventory", parents=[common], help="show the devices and steps the design defines")
     inv.set_defaults(func=cmd_inventory)

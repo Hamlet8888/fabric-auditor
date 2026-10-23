@@ -34,35 +34,40 @@
     "afi": "ipv4",
     "neighbor": "10.120.242.0",
     "remote_as": 65220,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.120.240.1",
     "remote_as": 65220,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "ipv4",
     "neighbor": "10.120.242.32",
     "remote_as": 65220,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.120.240.2",
     "remote_as": 65220,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "ipv4",
     "neighbor": "10.120.243.6",
     "remote_as": 65222,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    }
   ]
  },
@@ -295,6 +300,76 @@
    "protocol": "direct",
    "next_hops": [
     "Vlan100"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.240.1/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.0",
+    "10.120.242.32"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.240.2/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.0",
+    "10.120.242.32"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.240.12/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.0",
+    "10.120.242.32"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.240.13/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.0",
+    "10.120.242.32"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.240.14/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.0",
+    "10.120.242.32"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.240.21/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.0",
+    "10.120.242.32"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.240.22/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.0",
+    "10.120.242.32"
    ],
    "encap": null
   },
