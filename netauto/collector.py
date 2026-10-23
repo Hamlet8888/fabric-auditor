@@ -1,52 +1,54 @@
 """
-State collection for fabric-auditor.
+State collection.
 
-:class:`FabricCollector` gathers the operational state of every device in the
-intent, concurrently, from a :class:`StateSource`. The auditor only ever sees
-the normalized per-device document described below, so a live driver
-(NX-API, eAPI, gNMI, ...) plugs in by subclassing :class:`StateSource` and
-returning the same shape. This module ships :class:`MockStateSource`, which
-reads offline snapshots from ``examples/mock_states/<hostname>.json`` for
-pre-flight validation and tests.
+:class:`FabricCollector` gathers the operational state of every device in the design,
+concurrently, from a :class:`StateSource`. The auditor only ever sees the normalized
+per-device document described below, so a live driver (NX-API, gNMI, ...) plugs in by
+subclassing :class:`StateSource` and returning the same shape. This module ships
+:class:`SnapshotSource`, which reads offline snapshots from ``<state-dir>/<hostname>.json``
+for pre-flight validation and tests, and :class:`StaticStateSource` for in-memory states.
 
-Normalized device state (schema version 1)::
+Normalized device state (schema version 2)::
 
     {
-      "schema_version": 1,
-      "hostname": "lvd-lf01a",
-      "collected_at": "2026-10-21T14:00:00Z",          # optional
-      "interfaces": {
+      "schema_version": 2,
+      "hostname": "DC1-NXLF-03",
+      "collected_at": "2026-10-23T14:00:00Z",           # optional
+      "interfaces": {                                    # show interface
         "Ethernet1/49": {"mtu": 9216, "oper_status": "up"}
       },
-      "bgp": {
-        "router_id": "10.11.0.11",
-        "local_as": 65111,
-        "underlay": [                                   # show bgp ipv4 unicast summary
-          {"neighbor": "10.11.1.0", "router_id": "10.11.0.1",
-           "remote_as": 65100, "state": "Established", "prefixes_received": 8}
-        ],
-        "evpn": [                                       # show bgp l2vpn evpn summary
-          {"neighbor": "10.11.0.1", "router_id": "10.11.0.1",
-           "remote_as": 65100, "state": "Established", "prefixes_received": 42}
+      "bgp": {                                           # show bgp [vrf all] ... summary
+        "router_id": "10.110.240.13",
+        "local_as": 65213,
+        "sessions": [
+          {"vrf": "default", "afi": "ipv4", "neighbor": "10.110.242.4",
+           "remote_as": 65210, "state": "Established"}
         ]
       },
-      "evpn": {                                         # show bgp l2vpn evpn vni-id / show evpn evi
-        "vnis": [
-          {"vni": 10100, "type": "L2", "rd": "10.11.0.11:100",
-           "rt_import": ["65000:10100"], "rt_export": ["65000:10100"]}
-        ]
+      "bfd": [{"neighbor": "10.110.242.4", "state": "Up"}],      # show bfd neighbors
+      "evpn": {                                          # show bgp l2vpn evpn vni-id / show vrf detail
+        "vnis": [{"vni": 110010, "rd": "10.110.240.13:32777",
+                  "rt_import": ["65110:110010"], "rt_export": ["65110:110010"]}]
       },
-      "vni_map": [                                      # show nve vni
-        {"vni": 10100, "type": "L2", "vlan": 100, "state": "Up"},
-        {"vni": 50010, "type": "L3", "vrf": "TENANT-A", "state": "Up"}
-      ]
+      "vni_map": [                                       # show nve vni
+        {"vni": 110010, "type": "L2", "vlan": 10, "state": "Up"},
+        {"vni": 50010, "type": "L3", "vrf": "TRUST", "state": "Up"}
+      ],
+      "nve": {"state": "Up", "source_interface": "loopback1",        # show nve interface nve1 detail
+              "primary": "10.110.241.13", "secondary": "10.110.241.102"},
+      "vpc": {"domain": 112, "peer_status": "peer-ok", "keepalive_status": "peer-alive",   # show vpc brief
+              "keepalive_destination": "10.110.243.10", "peer_link": "port-channel10",
+              "peer_link_status": "up", "consistency": "success"},
+      "multisite": {"site_id": 110, "vip": "10.110.241.200",         # show nve multisite ...
+                    "fabric_links": {"Ethernet1/49": "Up"}, "dci_links": {"Ethernet1/51": "Up"}}
     }
 
-Spines carry no ``evpn.vnis`` or ``vni_map`` entries.
+Spines carry no ``evpn.vnis``, ``vni_map``, ``nve``, ``vpc`` or ``multisite``. Only leafs
+carry ``vpc`` and only border gateways ``multisite``.
 
-A device that cannot be collected (missing file, malformed JSON, timeout,
-schema violation) doesn't abort the run. It is recorded in
-:attr:`CollectionResult.errors` and the auditor reports it as a failure.
+A device that cannot be collected (missing file, malformed JSON, timeout, schema
+violation) doesn't abort the run. It is recorded in :attr:`CollectionResult.errors` and
+the auditor reports it as a failure.
 
 Standard library only (Python 3.9+).
 """
@@ -59,9 +61,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
-from core.inventory import Device, Fabric
+from netauto.expected import Design, Device
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 class StateError(Exception):
@@ -83,10 +85,10 @@ class StateSource:
         raise NotImplementedError
 
 
-class MockStateSource(StateSource):
+class SnapshotSource(StateSource):
     """Reads offline snapshots from ``<state_dir>/<hostname>.json``."""
 
-    name = "mock"
+    name = "snapshots"
 
     def __init__(self, state_dir) -> None:
         self.state_dir = Path(state_dir)
@@ -100,14 +102,13 @@ class MockStateSource(StateSource):
         try:
             text = await asyncio.to_thread(path.read_text, encoding="utf-8")
         except FileNotFoundError:
-            raise StateError(f"no mock state file at {path}") from None
+            raise StateError(f"no state snapshot at {path}") from None
         except OSError as exc:
             raise StateError(f"cannot read {path}: {exc}") from exc
         try:
-            data = json.loads(text)
+            return json.loads(text)
         except json.JSONDecodeError as exc:
             raise StateError(f"{path.name}: invalid JSON at line {exc.lineno}: {exc.msg}") from None
-        return data
 
 
 class StaticStateSource(StateSource):
@@ -142,17 +143,17 @@ class CollectionResult:
 
 
 class FabricCollector:
-    """Collects state for the devices in ``fabric`` with bounded concurrency.
+    """Collects state for the devices in ``design`` with bounded concurrency.
 
-    ``concurrency`` caps how many devices are queried at once and ``timeout``
-    (seconds) applies to each device separately.
+    ``concurrency`` caps how many devices are queried at once and ``timeout`` (seconds)
+    applies to each device separately.
     """
 
-    def __init__(self, fabric: Fabric, source: StateSource,
+    def __init__(self, design: Design, source: StateSource,
                  concurrency: int = 16, timeout: float = 30.0) -> None:
         if concurrency < 1:
             raise ValueError("concurrency must be at least 1")
-        self.fabric = fabric
+        self.design = design
         self.source = source
         self.concurrency = concurrency
         self.timeout = timeout
@@ -162,7 +163,7 @@ class FabricCollector:
         return asyncio.run(self.collect_async(devices))
 
     async def collect_async(self, devices: Optional[Iterable[Device]] = None) -> CollectionResult:
-        targets: List[Device] = list(devices) if devices is not None else self.fabric.devices()
+        targets: List[Device] = list(devices) if devices is not None else list(self.design.devices)
         sem = asyncio.Semaphore(self.concurrency)
         result = CollectionResult(source=self.source.name)
 
@@ -190,8 +191,8 @@ class FabricCollector:
 def validate_state(hostname: str, data: Any) -> None:
     """Check the structural shape of a state document. Raises :class:`StateError`.
 
-    Only structure and types are checked here. Whether the values match the
-    intent is the auditor's job.
+    Only structure and types are checked here. Whether the values match the design is the
+    auditor's job.
     """
     if not isinstance(data, dict):
         raise StateError("state document must be a JSON object")
@@ -209,16 +210,15 @@ def validate_state(hostname: str, data: Any) -> None:
             raise StateError(f"interfaces.{name}: 'mtu' must be an integer")
 
     bgp = data.get("bgp")
-    if not isinstance(bgp, dict):
-        raise StateError("'bgp' must be an object")
-    for afi in ("underlay", "evpn"):
-        peers = bgp.get(afi)
-        if not isinstance(peers, list):
-            raise StateError(f"bgp.{afi} must be a list of neighbors")
-        for i, peer in enumerate(peers):
-            if not isinstance(peer, dict) or not isinstance(peer.get("neighbor"), str) \
-                    or not isinstance(peer.get("state"), str):
-                raise StateError(f"bgp.{afi}[{i}]: 'neighbor' and 'state' are required strings")
+    if not isinstance(bgp, dict) or not isinstance(bgp.get("sessions"), list):
+        raise StateError("'bgp.sessions' must be a list")
+    for i, s in enumerate(bgp["sessions"]):
+        if not isinstance(s, dict) or not all(isinstance(s.get(k), str) for k in ("vrf", "afi", "neighbor", "state")):
+            raise StateError(f"bgp.sessions[{i}]: 'vrf', 'afi', 'neighbor' and 'state' are required strings")
+
+    bfd = data.get("bfd", [])
+    if not isinstance(bfd, list) or not all(isinstance(b, dict) and isinstance(b.get("neighbor"), str) for b in bfd):
+        raise StateError("'bfd' must be a list of {neighbor, state}")
 
     evpn = data.get("evpn")
     if not isinstance(evpn, dict) or not isinstance(evpn.get("vnis"), list):
@@ -236,6 +236,10 @@ def validate_state(hostname: str, data: Any) -> None:
     for i, v in enumerate(vmap):
         if not isinstance(v, dict) or not _is_int(v.get("vni")):
             raise StateError(f"vni_map[{i}]: 'vni' must be an integer")
+
+    for key in ("nve", "vpc", "multisite"):
+        if data.get(key) is not None and not isinstance(data[key], dict):
+            raise StateError(f"'{key}' must be an object")
 
 
 def _is_int(v: Any) -> bool:

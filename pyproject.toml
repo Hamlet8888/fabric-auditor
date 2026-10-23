@@ -3,21 +3,18 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fabric-auditor"
-version = "0.1.0"
-description = "Intent-based validation for multi-site BGP EVPN/VXLAN spine-leaf fabrics"
+name = "network-automation-tools"
+version = "0.2.0"
+description = "Check BGP EVPN/VXLAN Multi-Site fabrics against the expected state from network-design"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = []
 
-[project.optional-dependencies]
-yaml = ["PyYAML>=5.4"]   # optional: core.miniyaml is used when PyYAML is absent
-
 [project.scripts]
-fabric-auditor = "core.cli:main"
+netauto = "netauto.cli:main"
 
 [tool.setuptools]
-packages = ["core"]
+packages = ["netauto"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

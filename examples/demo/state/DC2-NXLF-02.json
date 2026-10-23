@@ -1,0 +1,200 @@
+{
+ "schema_version": 2,
+ "hostname": "DC2-NXLF-02",
+ "collected_at": "2026-10-23T14:00:00Z",
+ "platform": "nxos",
+ "interfaces": {
+  "mgmt0": {
+   "mtu": 1500,
+   "oper_status": "up"
+  },
+  "loopback0": {
+   "mtu": 1500,
+   "oper_status": "up"
+  },
+  "Ethernet1/49": {
+   "mtu": 9216,
+   "oper_status": "up"
+  },
+  "Ethernet1/50": {
+   "mtu": 9216,
+   "oper_status": "up"
+  },
+  "Vlan3900": {
+   "mtu": 9216,
+   "oper_status": "up"
+  }
+ },
+ "bgp": {
+  "router_id": "10.120.240.12",
+  "local_as": 65222,
+  "sessions": [
+   {
+    "vrf": "default",
+    "afi": "ipv4",
+    "neighbor": "10.120.242.2",
+    "remote_as": 65220,
+    "state": "Established"
+   },
+   {
+    "vrf": "default",
+    "afi": "evpn",
+    "neighbor": "10.120.240.1",
+    "remote_as": 65220,
+    "state": "Established"
+   },
+   {
+    "vrf": "default",
+    "afi": "ipv4",
+    "neighbor": "10.120.242.34",
+    "remote_as": 65220,
+    "state": "Established"
+   },
+   {
+    "vrf": "default",
+    "afi": "evpn",
+    "neighbor": "10.120.240.2",
+    "remote_as": 65220,
+    "state": "Established"
+   },
+   {
+    "vrf": "default",
+    "afi": "ipv4",
+    "neighbor": "10.120.243.5",
+    "remote_as": 65221,
+    "state": "Established"
+   }
+  ]
+ },
+ "bfd": [
+  {
+   "neighbor": "10.120.242.2",
+   "state": "Up"
+  },
+  {
+   "neighbor": "10.120.242.34",
+   "state": "Up"
+  },
+  {
+   "neighbor": "10.120.243.5",
+   "state": "Up"
+  }
+ ],
+ "evpn": {
+  "vnis": [
+   {
+    "vni": 50010,
+    "rd": "10.120.240.12:3",
+    "rt_import": [
+     "65000:50010"
+    ],
+    "rt_export": [
+     "65000:50010"
+    ]
+   },
+   {
+    "vni": 120010,
+    "rd": "10.120.240.12:32777",
+    "rt_import": [
+     "65120:120010"
+    ],
+    "rt_export": [
+     "65120:120010"
+    ]
+   },
+   {
+    "vni": 120020,
+    "rd": "10.120.240.12:32787",
+    "rt_import": [
+     "65120:120020"
+    ],
+    "rt_export": [
+     "65120:120020"
+    ]
+   },
+   {
+    "vni": 120030,
+    "rd": "10.120.240.12:32797",
+    "rt_import": [
+     "65120:120030"
+    ],
+    "rt_export": [
+     "65120:120030"
+    ]
+   },
+   {
+    "vni": 120040,
+    "rd": "10.120.240.12:32807",
+    "rt_import": [
+     "65120:120040"
+    ],
+    "rt_export": [
+     "65120:120040"
+    ]
+   },
+   {
+    "vni": 120100,
+    "rd": "10.120.240.12:32867",
+    "rt_import": [
+     "65120:120100"
+    ],
+    "rt_export": [
+     "65120:120100"
+    ]
+   }
+  ]
+ },
+ "vni_map": [
+  {
+   "vni": 50010,
+   "type": "L3",
+   "vrf": "TRUST",
+   "state": "Up"
+  },
+  {
+   "vni": 120010,
+   "type": "L2",
+   "vlan": 10,
+   "state": "Up"
+  },
+  {
+   "vni": 120020,
+   "type": "L2",
+   "vlan": 20,
+   "state": "Up"
+  },
+  {
+   "vni": 120030,
+   "type": "L2",
+   "vlan": 30,
+   "state": "Up"
+  },
+  {
+   "vni": 120040,
+   "type": "L2",
+   "vlan": 40,
+   "state": "Up"
+  },
+  {
+   "vni": 120100,
+   "type": "L2",
+   "vlan": 100,
+   "state": "Up"
+  }
+ ],
+ "nve": {
+  "state": "Up",
+  "source_interface": "loopback1",
+  "primary": "10.120.241.12",
+  "secondary": "10.120.241.101"
+ },
+ "vpc": {
+  "domain": 121,
+  "peer_status": "peer-ok",
+  "keepalive_status": "peer-alive",
+  "keepalive_destination": "10.120.243.1",
+  "peer_link": "port-channel10",
+  "peer_link_status": "up",
+  "consistency": "success"
+ }
+}

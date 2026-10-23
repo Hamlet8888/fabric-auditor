@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# fabric-auditor: keep production data and secrets out of version control.
+# network-automation-tools: keep production data and secrets out of version control.
 # Only code, docs and fictional examples/ data belong in git.
 # ---------------------------------------------------------------------------
 

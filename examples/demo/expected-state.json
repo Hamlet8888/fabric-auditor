@@ -1,0 +1,2332 @@
+{
+ "schema_version": 1,
+ "generator": "network-design",
+ "classification": "FICTIONAL DEMO DATA: not for any real network.",
+ "dci_mode": "full-mesh",
+ "steps": [
+  {
+   "id": "M1",
+   "title": "Build each fabric"
+  },
+  {
+   "id": "M2",
+   "title": "Join legacy core"
+  },
+  {
+   "id": "M3",
+   "title": "Move hosts and gateways"
+  },
+  {
+   "id": "M4",
+   "title": "Move the firewalls"
+  },
+  {
+   "id": "M5",
+   "title": "Multi-Site and cloud"
+  },
+  {
+   "id": "M6",
+   "title": "Retire the legacy core"
+  }
+ ],
+ "sites": [
+  {
+   "code": "DC1",
+   "octet": 110,
+   "multisite_site_id": 110,
+   "multisite_vip": "10.110.241.200"
+  },
+  {
+   "code": "DC2",
+   "octet": 120,
+   "multisite_site_id": 120,
+   "multisite_vip": "10.120.241.200"
+  }
+ ],
+ "devices": [
+  {
+   "hostname": "DC1-NXSP-01",
+   "site": "DC1",
+   "role": "spine",
+   "asn": 65210,
+   "router_id": "10.110.240.1",
+   "interfaces": {
+    "Ethernet1/1": {
+     "mtu": 9216,
+     "peer": "DC1-NXLF-01",
+     "address": "10.110.242.0/31"
+    },
+    "Ethernet1/2": {
+     "mtu": 9216,
+     "peer": "DC1-NXLF-02",
+     "address": "10.110.242.2/31"
+    },
+    "Ethernet1/3": {
+     "mtu": 9216,
+     "peer": "DC1-NXLF-03",
+     "address": "10.110.242.4/31"
+    },
+    "Ethernet1/4": {
+     "mtu": 9216,
+     "peer": "DC1-NXLF-04",
+     "address": "10.110.242.6/31"
+    },
+    "Ethernet1/5": {
+     "mtu": 9216,
+     "peer": "DC1-NXBGW-01",
+     "address": "10.110.242.8/31"
+    },
+    "Ethernet1/6": {
+     "mtu": 9216,
+     "peer": "DC1-NXBGW-02",
+     "address": "10.110.242.10/31"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.1",
+     "remote_as": 65211,
+     "peer": "DC1-NXLF-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.11",
+     "remote_as": 65211,
+     "peer": "DC1-NXLF-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.3",
+     "remote_as": 65212,
+     "peer": "DC1-NXLF-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.12",
+     "remote_as": 65212,
+     "peer": "DC1-NXLF-02",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.5",
+     "remote_as": 65213,
+     "peer": "DC1-NXLF-03",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.13",
+     "remote_as": 65213,
+     "peer": "DC1-NXLF-03",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.7",
+     "remote_as": 65214,
+     "peer": "DC1-NXLF-04",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.14",
+     "remote_as": 65214,
+     "peer": "DC1-NXLF-04",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.9",
+     "remote_as": 65215,
+     "peer": "DC1-NXBGW-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.21",
+     "remote_as": 65215,
+     "peer": "DC1-NXBGW-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.11",
+     "remote_as": 65216,
+     "peer": "DC1-NXBGW-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.22",
+     "remote_as": 65216,
+     "peer": "DC1-NXBGW-02",
+     "bfd": false
+    }
+   ]
+  },
+  {
+   "hostname": "DC1-NXSP-02",
+   "site": "DC1",
+   "role": "spine",
+   "asn": 65210,
+   "router_id": "10.110.240.2",
+   "interfaces": {
+    "Ethernet1/1": {
+     "mtu": 9216,
+     "peer": "DC1-NXLF-01",
+     "address": "10.110.242.32/31"
+    },
+    "Ethernet1/2": {
+     "mtu": 9216,
+     "peer": "DC1-NXLF-02",
+     "address": "10.110.242.34/31"
+    },
+    "Ethernet1/3": {
+     "mtu": 9216,
+     "peer": "DC1-NXLF-03",
+     "address": "10.110.242.36/31"
+    },
+    "Ethernet1/4": {
+     "mtu": 9216,
+     "peer": "DC1-NXLF-04",
+     "address": "10.110.242.38/31"
+    },
+    "Ethernet1/5": {
+     "mtu": 9216,
+     "peer": "DC1-NXBGW-01",
+     "address": "10.110.242.40/31"
+    },
+    "Ethernet1/6": {
+     "mtu": 9216,
+     "peer": "DC1-NXBGW-02",
+     "address": "10.110.242.42/31"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.33",
+     "remote_as": 65211,
+     "peer": "DC1-NXLF-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.11",
+     "remote_as": 65211,
+     "peer": "DC1-NXLF-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.35",
+     "remote_as": 65212,
+     "peer": "DC1-NXLF-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.12",
+     "remote_as": 65212,
+     "peer": "DC1-NXLF-02",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.37",
+     "remote_as": 65213,
+     "peer": "DC1-NXLF-03",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.13",
+     "remote_as": 65213,
+     "peer": "DC1-NXLF-03",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.39",
+     "remote_as": 65214,
+     "peer": "DC1-NXLF-04",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.14",
+     "remote_as": 65214,
+     "peer": "DC1-NXLF-04",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.41",
+     "remote_as": 65215,
+     "peer": "DC1-NXBGW-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.21",
+     "remote_as": 65215,
+     "peer": "DC1-NXBGW-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.43",
+     "remote_as": 65216,
+     "peer": "DC1-NXBGW-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.22",
+     "remote_as": 65216,
+     "peer": "DC1-NXBGW-02",
+     "bfd": false
+    }
+   ]
+  },
+  {
+   "hostname": "DC1-NXLF-01",
+   "site": "DC1",
+   "role": "leaf",
+   "asn": 65211,
+   "router_id": "10.110.240.11",
+   "interfaces": {
+    "Ethernet1/49": {
+     "mtu": 9216,
+     "peer": "DC1-NXSP-01",
+     "address": "10.110.242.1/31"
+    },
+    "Ethernet1/50": {
+     "mtu": 9216,
+     "peer": "DC1-NXSP-02",
+     "address": "10.110.242.33/31"
+    },
+    "Vlan3900": {
+     "mtu": 9216,
+     "peer": "DC1-NXLF-02",
+     "address": "10.110.243.5/30"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.0",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.1",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.32",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.2",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-02",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.243.6",
+     "remote_as": 65212,
+     "peer": "DC1-NXLF-02",
+     "bfd": true
+    }
+   ],
+   "vnis": [
+    {
+     "vni": 50010,
+     "type": "L3",
+     "vrf": "TRUST",
+     "vlan": 3910,
+     "rd": "auto",
+     "route_target": "65000:50010"
+    },
+    {
+     "vni": 110010,
+     "type": "L2",
+     "vlan": 10,
+     "rd": "auto",
+     "route_target": "65110:110010"
+    },
+    {
+     "vni": 110020,
+     "type": "L2",
+     "vlan": 20,
+     "rd": "auto",
+     "route_target": "65110:110020"
+    },
+    {
+     "vni": 110030,
+     "type": "L2",
+     "vlan": 30,
+     "rd": "auto",
+     "route_target": "65110:110030"
+    },
+    {
+     "vni": 110040,
+     "type": "L2",
+     "vlan": 40,
+     "rd": "auto",
+     "route_target": "65110:110040"
+    },
+    {
+     "vni": 110100,
+     "type": "L2",
+     "vlan": 100,
+     "rd": "auto",
+     "route_target": "65110:110100"
+    }
+   ],
+   "nve": {
+    "source_interface": "loopback1",
+    "primary": "10.110.241.11",
+    "secondary": "10.110.241.101"
+   },
+   "vpc": {
+    "domain": 111,
+    "peer": "DC1-NXLF-02",
+    "keepalive": "10.110.243.2",
+    "peer_link": "port-channel10"
+   }
+  },
+  {
+   "hostname": "DC1-NXLF-02",
+   "site": "DC1",
+   "role": "leaf",
+   "asn": 65212,
+   "router_id": "10.110.240.12",
+   "interfaces": {
+    "Ethernet1/49": {
+     "mtu": 9216,
+     "peer": "DC1-NXSP-01",
+     "address": "10.110.242.3/31"
+    },
+    "Ethernet1/50": {
+     "mtu": 9216,
+     "peer": "DC1-NXSP-02",
+     "address": "10.110.242.35/31"
+    },
+    "Vlan3900": {
+     "mtu": 9216,
+     "peer": "DC1-NXLF-01",
+     "address": "10.110.243.6/30"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.2",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.1",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.34",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.2",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-02",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.243.5",
+     "remote_as": 65211,
+     "peer": "DC1-NXLF-01",
+     "bfd": true
+    }
+   ],
+   "vnis": [
+    {
+     "vni": 50010,
+     "type": "L3",
+     "vrf": "TRUST",
+     "vlan": 3910,
+     "rd": "auto",
+     "route_target": "65000:50010"
+    },
+    {
+     "vni": 110010,
+     "type": "L2",
+     "vlan": 10,
+     "rd": "auto",
+     "route_target": "65110:110010"
+    },
+    {
+     "vni": 110020,
+     "type": "L2",
+     "vlan": 20,
+     "rd": "auto",
+     "route_target": "65110:110020"
+    },
+    {
+     "vni": 110030,
+     "type": "L2",
+     "vlan": 30,
+     "rd": "auto",
+     "route_target": "65110:110030"
+    },
+    {
+     "vni": 110040,
+     "type": "L2",
+     "vlan": 40,
+     "rd": "auto",
+     "route_target": "65110:110040"
+    },
+    {
+     "vni": 110100,
+     "type": "L2",
+     "vlan": 100,
+     "rd": "auto",
+     "route_target": "65110:110100"
+    }
+   ],
+   "nve": {
+    "source_interface": "loopback1",
+    "primary": "10.110.241.12",
+    "secondary": "10.110.241.101"
+   },
+   "vpc": {
+    "domain": 111,
+    "peer": "DC1-NXLF-01",
+    "keepalive": "10.110.243.1",
+    "peer_link": "port-channel10"
+   }
+  },
+  {
+   "hostname": "DC1-NXLF-03",
+   "site": "DC1",
+   "role": "border-leaf",
+   "asn": 65213,
+   "router_id": "10.110.240.13",
+   "interfaces": {
+    "Ethernet1/49": {
+     "mtu": 9216,
+     "peer": "DC1-NXSP-01",
+     "address": "10.110.242.5/31"
+    },
+    "Ethernet1/50": {
+     "mtu": 9216,
+     "peer": "DC1-NXSP-02",
+     "address": "10.110.242.37/31"
+    },
+    "Vlan3900": {
+     "mtu": 9216,
+     "peer": "DC1-NXLF-04",
+     "address": "10.110.243.13/30"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.4",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.1",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.36",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.2",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-02",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.243.14",
+     "remote_as": 65214,
+     "peer": "DC1-NXLF-04",
+     "bfd": true
+    },
+    {
+     "step": "M2",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "<DC1-CORE-VLAN99-IP>",
+     "remote_as": 65218,
+     "peer": "legacy core",
+     "bfd": false,
+     "until": "M6"
+    },
+    {
+     "step": "M4",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "10.110.244.65",
+     "remote_as": 65217,
+     "peer": "DC1-FW-01/02",
+     "bfd": true
+    }
+   ],
+   "vnis": [
+    {
+     "vni": 50010,
+     "type": "L3",
+     "vrf": "TRUST",
+     "vlan": 3910,
+     "rd": "auto",
+     "route_target": "65000:50010"
+    },
+    {
+     "vni": 110010,
+     "type": "L2",
+     "vlan": 10,
+     "rd": "auto",
+     "route_target": "65110:110010"
+    },
+    {
+     "vni": 110020,
+     "type": "L2",
+     "vlan": 20,
+     "rd": "auto",
+     "route_target": "65110:110020"
+    },
+    {
+     "vni": 110030,
+     "type": "L2",
+     "vlan": 30,
+     "rd": "auto",
+     "route_target": "65110:110030"
+    },
+    {
+     "vni": 110040,
+     "type": "L2",
+     "vlan": 40,
+     "rd": "auto",
+     "route_target": "65110:110040"
+    },
+    {
+     "vni": 110100,
+     "type": "L2",
+     "vlan": 100,
+     "rd": "auto",
+     "route_target": "65110:110100"
+    }
+   ],
+   "nve": {
+    "source_interface": "loopback1",
+    "primary": "10.110.241.13",
+    "secondary": "10.110.241.102"
+   },
+   "vpc": {
+    "domain": 112,
+    "peer": "DC1-NXLF-04",
+    "keepalive": "10.110.243.10",
+    "peer_link": "port-channel10"
+   }
+  },
+  {
+   "hostname": "DC1-NXLF-04",
+   "site": "DC1",
+   "role": "border-leaf",
+   "asn": 65214,
+   "router_id": "10.110.240.14",
+   "interfaces": {
+    "Ethernet1/49": {
+     "mtu": 9216,
+     "peer": "DC1-NXSP-01",
+     "address": "10.110.242.7/31"
+    },
+    "Ethernet1/50": {
+     "mtu": 9216,
+     "peer": "DC1-NXSP-02",
+     "address": "10.110.242.39/31"
+    },
+    "Vlan3900": {
+     "mtu": 9216,
+     "peer": "DC1-NXLF-03",
+     "address": "10.110.243.14/30"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.6",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.1",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.38",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.2",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-02",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.243.13",
+     "remote_as": 65213,
+     "peer": "DC1-NXLF-03",
+     "bfd": true
+    },
+    {
+     "step": "M2",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "<DC1-CORE-VLAN99-IP>",
+     "remote_as": 65218,
+     "peer": "legacy core",
+     "bfd": false,
+     "until": "M6"
+    },
+    {
+     "step": "M4",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "10.110.244.73",
+     "remote_as": 65217,
+     "peer": "DC1-FW-01/02",
+     "bfd": true
+    }
+   ],
+   "vnis": [
+    {
+     "vni": 50010,
+     "type": "L3",
+     "vrf": "TRUST",
+     "vlan": 3910,
+     "rd": "auto",
+     "route_target": "65000:50010"
+    },
+    {
+     "vni": 110010,
+     "type": "L2",
+     "vlan": 10,
+     "rd": "auto",
+     "route_target": "65110:110010"
+    },
+    {
+     "vni": 110020,
+     "type": "L2",
+     "vlan": 20,
+     "rd": "auto",
+     "route_target": "65110:110020"
+    },
+    {
+     "vni": 110030,
+     "type": "L2",
+     "vlan": 30,
+     "rd": "auto",
+     "route_target": "65110:110030"
+    },
+    {
+     "vni": 110040,
+     "type": "L2",
+     "vlan": 40,
+     "rd": "auto",
+     "route_target": "65110:110040"
+    },
+    {
+     "vni": 110100,
+     "type": "L2",
+     "vlan": 100,
+     "rd": "auto",
+     "route_target": "65110:110100"
+    }
+   ],
+   "nve": {
+    "source_interface": "loopback1",
+    "primary": "10.110.241.14",
+    "secondary": "10.110.241.102"
+   },
+   "vpc": {
+    "domain": 112,
+    "peer": "DC1-NXLF-03",
+    "keepalive": "10.110.243.9",
+    "peer_link": "port-channel10"
+   }
+  },
+  {
+   "hostname": "DC1-NXBGW-01",
+   "site": "DC1",
+   "role": "bgw",
+   "asn": 65215,
+   "router_id": "10.110.240.21",
+   "interfaces": {
+    "Ethernet1/49": {
+     "mtu": 9216,
+     "peer": "DC1-NXSP-01",
+     "address": "10.110.242.9/31"
+    },
+    "Ethernet1/50": {
+     "mtu": 9216,
+     "peer": "DC1-NXSP-02",
+     "address": "10.110.242.41/31"
+    },
+    "Ethernet1/51": {
+     "mtu": 9216,
+     "peer": "DC2-NXBGW-01",
+     "address": "10.110.246.0/31",
+     "dci_carrier": "A"
+    },
+    "Ethernet1/52": {
+     "mtu": 9216,
+     "peer": "DC2-NXBGW-02",
+     "address": "10.120.246.1/31",
+     "dci_carrier": "B"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.8",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.1",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.40",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.2",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-02",
+     "bfd": false
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.246.1",
+     "remote_as": 65225,
+     "peer": "DC2-NXBGW-01",
+     "bfd": true
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.246.0",
+     "remote_as": 65226,
+     "peer": "DC2-NXBGW-02",
+     "bfd": true
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.21",
+     "remote_as": 65225,
+     "peer": "DC2-NXBGW-01",
+     "bfd": false
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.22",
+     "remote_as": 65226,
+     "peer": "DC2-NXBGW-02",
+     "bfd": false
+    },
+    {
+     "step": "M5",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "10.110.244.2",
+     "remote_as": 64512,
+     "peer": "AWS Direct Connect",
+     "bfd": true
+    },
+    {
+     "step": "M5",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "10.110.244.18",
+     "remote_as": 12076,
+     "peer": "Azure ExpressRoute",
+     "bfd": true
+    }
+   ],
+   "vnis": [
+    {
+     "vni": 50010,
+     "type": "L3",
+     "vrf": "TRUST",
+     "vlan": 3910,
+     "rd": "auto",
+     "route_target": "65000:50010"
+    }
+   ],
+   "nve": {
+    "source_interface": "loopback1",
+    "primary": "10.110.241.21"
+   },
+   "multisite": {
+    "site_id": 110,
+    "vip": "10.110.241.200",
+    "fabric_links": [
+     "Ethernet1/49",
+     "Ethernet1/50"
+    ],
+    "dci_links": [
+     "Ethernet1/51",
+     "Ethernet1/52"
+    ]
+   }
+  },
+  {
+   "hostname": "DC1-NXBGW-02",
+   "site": "DC1",
+   "role": "bgw",
+   "asn": 65216,
+   "router_id": "10.110.240.22",
+   "interfaces": {
+    "Ethernet1/49": {
+     "mtu": 9216,
+     "peer": "DC1-NXSP-01",
+     "address": "10.110.242.11/31"
+    },
+    "Ethernet1/50": {
+     "mtu": 9216,
+     "peer": "DC1-NXSP-02",
+     "address": "10.110.242.43/31"
+    },
+    "Ethernet1/51": {
+     "mtu": 9216,
+     "peer": "DC2-NXBGW-02",
+     "address": "10.110.246.2/31",
+     "dci_carrier": "A"
+    },
+    "Ethernet1/52": {
+     "mtu": 9216,
+     "peer": "DC2-NXBGW-01",
+     "address": "10.120.246.3/31",
+     "dci_carrier": "B"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.10",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.1",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.242.42",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.2",
+     "remote_as": 65210,
+     "peer": "DC1-NXSP-02",
+     "bfd": false
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.246.3",
+     "remote_as": 65226,
+     "peer": "DC2-NXBGW-02",
+     "bfd": true
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.246.2",
+     "remote_as": 65225,
+     "peer": "DC2-NXBGW-01",
+     "bfd": true
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.21",
+     "remote_as": 65225,
+     "peer": "DC2-NXBGW-01",
+     "bfd": false
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.22",
+     "remote_as": 65226,
+     "peer": "DC2-NXBGW-02",
+     "bfd": false
+    },
+    {
+     "step": "M5",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "10.110.244.10",
+     "remote_as": 64512,
+     "peer": "AWS Direct Connect",
+     "bfd": true
+    },
+    {
+     "step": "M5",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "10.110.244.22",
+     "remote_as": 12076,
+     "peer": "Azure ExpressRoute",
+     "bfd": true
+    }
+   ],
+   "vnis": [
+    {
+     "vni": 50010,
+     "type": "L3",
+     "vrf": "TRUST",
+     "vlan": 3910,
+     "rd": "auto",
+     "route_target": "65000:50010"
+    }
+   ],
+   "nve": {
+    "source_interface": "loopback1",
+    "primary": "10.110.241.22"
+   },
+   "multisite": {
+    "site_id": 110,
+    "vip": "10.110.241.200",
+    "fabric_links": [
+     "Ethernet1/49",
+     "Ethernet1/50"
+    ],
+    "dci_links": [
+     "Ethernet1/51",
+     "Ethernet1/52"
+    ]
+   }
+  },
+  {
+   "hostname": "DC2-NXSP-01",
+   "site": "DC2",
+   "role": "spine",
+   "asn": 65220,
+   "router_id": "10.120.240.1",
+   "interfaces": {
+    "Ethernet1/1": {
+     "mtu": 9216,
+     "peer": "DC2-NXLF-01",
+     "address": "10.120.242.0/31"
+    },
+    "Ethernet1/2": {
+     "mtu": 9216,
+     "peer": "DC2-NXLF-02",
+     "address": "10.120.242.2/31"
+    },
+    "Ethernet1/3": {
+     "mtu": 9216,
+     "peer": "DC2-NXLF-03",
+     "address": "10.120.242.4/31"
+    },
+    "Ethernet1/4": {
+     "mtu": 9216,
+     "peer": "DC2-NXLF-04",
+     "address": "10.120.242.6/31"
+    },
+    "Ethernet1/5": {
+     "mtu": 9216,
+     "peer": "DC2-NXBGW-01",
+     "address": "10.120.242.8/31"
+    },
+    "Ethernet1/6": {
+     "mtu": 9216,
+     "peer": "DC2-NXBGW-02",
+     "address": "10.120.242.10/31"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.1",
+     "remote_as": 65221,
+     "peer": "DC2-NXLF-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.11",
+     "remote_as": 65221,
+     "peer": "DC2-NXLF-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.3",
+     "remote_as": 65222,
+     "peer": "DC2-NXLF-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.12",
+     "remote_as": 65222,
+     "peer": "DC2-NXLF-02",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.5",
+     "remote_as": 65223,
+     "peer": "DC2-NXLF-03",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.13",
+     "remote_as": 65223,
+     "peer": "DC2-NXLF-03",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.7",
+     "remote_as": 65224,
+     "peer": "DC2-NXLF-04",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.14",
+     "remote_as": 65224,
+     "peer": "DC2-NXLF-04",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.9",
+     "remote_as": 65225,
+     "peer": "DC2-NXBGW-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.21",
+     "remote_as": 65225,
+     "peer": "DC2-NXBGW-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.11",
+     "remote_as": 65226,
+     "peer": "DC2-NXBGW-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.22",
+     "remote_as": 65226,
+     "peer": "DC2-NXBGW-02",
+     "bfd": false
+    }
+   ]
+  },
+  {
+   "hostname": "DC2-NXSP-02",
+   "site": "DC2",
+   "role": "spine",
+   "asn": 65220,
+   "router_id": "10.120.240.2",
+   "interfaces": {
+    "Ethernet1/1": {
+     "mtu": 9216,
+     "peer": "DC2-NXLF-01",
+     "address": "10.120.242.32/31"
+    },
+    "Ethernet1/2": {
+     "mtu": 9216,
+     "peer": "DC2-NXLF-02",
+     "address": "10.120.242.34/31"
+    },
+    "Ethernet1/3": {
+     "mtu": 9216,
+     "peer": "DC2-NXLF-03",
+     "address": "10.120.242.36/31"
+    },
+    "Ethernet1/4": {
+     "mtu": 9216,
+     "peer": "DC2-NXLF-04",
+     "address": "10.120.242.38/31"
+    },
+    "Ethernet1/5": {
+     "mtu": 9216,
+     "peer": "DC2-NXBGW-01",
+     "address": "10.120.242.40/31"
+    },
+    "Ethernet1/6": {
+     "mtu": 9216,
+     "peer": "DC2-NXBGW-02",
+     "address": "10.120.242.42/31"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.33",
+     "remote_as": 65221,
+     "peer": "DC2-NXLF-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.11",
+     "remote_as": 65221,
+     "peer": "DC2-NXLF-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.35",
+     "remote_as": 65222,
+     "peer": "DC2-NXLF-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.12",
+     "remote_as": 65222,
+     "peer": "DC2-NXLF-02",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.37",
+     "remote_as": 65223,
+     "peer": "DC2-NXLF-03",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.13",
+     "remote_as": 65223,
+     "peer": "DC2-NXLF-03",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.39",
+     "remote_as": 65224,
+     "peer": "DC2-NXLF-04",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.14",
+     "remote_as": 65224,
+     "peer": "DC2-NXLF-04",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.41",
+     "remote_as": 65225,
+     "peer": "DC2-NXBGW-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.21",
+     "remote_as": 65225,
+     "peer": "DC2-NXBGW-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.43",
+     "remote_as": 65226,
+     "peer": "DC2-NXBGW-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.22",
+     "remote_as": 65226,
+     "peer": "DC2-NXBGW-02",
+     "bfd": false
+    }
+   ]
+  },
+  {
+   "hostname": "DC2-NXLF-01",
+   "site": "DC2",
+   "role": "leaf",
+   "asn": 65221,
+   "router_id": "10.120.240.11",
+   "interfaces": {
+    "Ethernet1/49": {
+     "mtu": 9216,
+     "peer": "DC2-NXSP-01",
+     "address": "10.120.242.1/31"
+    },
+    "Ethernet1/50": {
+     "mtu": 9216,
+     "peer": "DC2-NXSP-02",
+     "address": "10.120.242.33/31"
+    },
+    "Vlan3900": {
+     "mtu": 9216,
+     "peer": "DC2-NXLF-02",
+     "address": "10.120.243.5/30"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.0",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.1",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.32",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.2",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-02",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.243.6",
+     "remote_as": 65222,
+     "peer": "DC2-NXLF-02",
+     "bfd": true
+    }
+   ],
+   "vnis": [
+    {
+     "vni": 50010,
+     "type": "L3",
+     "vrf": "TRUST",
+     "vlan": 3910,
+     "rd": "auto",
+     "route_target": "65000:50010"
+    },
+    {
+     "vni": 120010,
+     "type": "L2",
+     "vlan": 10,
+     "rd": "auto",
+     "route_target": "65120:120010"
+    },
+    {
+     "vni": 120020,
+     "type": "L2",
+     "vlan": 20,
+     "rd": "auto",
+     "route_target": "65120:120020"
+    },
+    {
+     "vni": 120030,
+     "type": "L2",
+     "vlan": 30,
+     "rd": "auto",
+     "route_target": "65120:120030"
+    },
+    {
+     "vni": 120040,
+     "type": "L2",
+     "vlan": 40,
+     "rd": "auto",
+     "route_target": "65120:120040"
+    },
+    {
+     "vni": 120100,
+     "type": "L2",
+     "vlan": 100,
+     "rd": "auto",
+     "route_target": "65120:120100"
+    }
+   ],
+   "nve": {
+    "source_interface": "loopback1",
+    "primary": "10.120.241.11",
+    "secondary": "10.120.241.101"
+   },
+   "vpc": {
+    "domain": 121,
+    "peer": "DC2-NXLF-02",
+    "keepalive": "10.120.243.2",
+    "peer_link": "port-channel10"
+   }
+  },
+  {
+   "hostname": "DC2-NXLF-02",
+   "site": "DC2",
+   "role": "leaf",
+   "asn": 65222,
+   "router_id": "10.120.240.12",
+   "interfaces": {
+    "Ethernet1/49": {
+     "mtu": 9216,
+     "peer": "DC2-NXSP-01",
+     "address": "10.120.242.3/31"
+    },
+    "Ethernet1/50": {
+     "mtu": 9216,
+     "peer": "DC2-NXSP-02",
+     "address": "10.120.242.35/31"
+    },
+    "Vlan3900": {
+     "mtu": 9216,
+     "peer": "DC2-NXLF-01",
+     "address": "10.120.243.6/30"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.2",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.1",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.34",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.2",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-02",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.243.5",
+     "remote_as": 65221,
+     "peer": "DC2-NXLF-01",
+     "bfd": true
+    }
+   ],
+   "vnis": [
+    {
+     "vni": 50010,
+     "type": "L3",
+     "vrf": "TRUST",
+     "vlan": 3910,
+     "rd": "auto",
+     "route_target": "65000:50010"
+    },
+    {
+     "vni": 120010,
+     "type": "L2",
+     "vlan": 10,
+     "rd": "auto",
+     "route_target": "65120:120010"
+    },
+    {
+     "vni": 120020,
+     "type": "L2",
+     "vlan": 20,
+     "rd": "auto",
+     "route_target": "65120:120020"
+    },
+    {
+     "vni": 120030,
+     "type": "L2",
+     "vlan": 30,
+     "rd": "auto",
+     "route_target": "65120:120030"
+    },
+    {
+     "vni": 120040,
+     "type": "L2",
+     "vlan": 40,
+     "rd": "auto",
+     "route_target": "65120:120040"
+    },
+    {
+     "vni": 120100,
+     "type": "L2",
+     "vlan": 100,
+     "rd": "auto",
+     "route_target": "65120:120100"
+    }
+   ],
+   "nve": {
+    "source_interface": "loopback1",
+    "primary": "10.120.241.12",
+    "secondary": "10.120.241.101"
+   },
+   "vpc": {
+    "domain": 121,
+    "peer": "DC2-NXLF-01",
+    "keepalive": "10.120.243.1",
+    "peer_link": "port-channel10"
+   }
+  },
+  {
+   "hostname": "DC2-NXLF-03",
+   "site": "DC2",
+   "role": "border-leaf",
+   "asn": 65223,
+   "router_id": "10.120.240.13",
+   "interfaces": {
+    "Ethernet1/49": {
+     "mtu": 9216,
+     "peer": "DC2-NXSP-01",
+     "address": "10.120.242.5/31"
+    },
+    "Ethernet1/50": {
+     "mtu": 9216,
+     "peer": "DC2-NXSP-02",
+     "address": "10.120.242.37/31"
+    },
+    "Vlan3900": {
+     "mtu": 9216,
+     "peer": "DC2-NXLF-04",
+     "address": "10.120.243.13/30"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.4",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.1",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.36",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.2",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-02",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.243.14",
+     "remote_as": 65224,
+     "peer": "DC2-NXLF-04",
+     "bfd": true
+    },
+    {
+     "step": "M2",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "10.120.99.2",
+     "remote_as": 65228,
+     "peer": "legacy core",
+     "bfd": false,
+     "until": "M6"
+    },
+    {
+     "step": "M4",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "10.120.244.65",
+     "remote_as": 65227,
+     "peer": "DC2-FW-01/02",
+     "bfd": true
+    }
+   ],
+   "vnis": [
+    {
+     "vni": 50010,
+     "type": "L3",
+     "vrf": "TRUST",
+     "vlan": 3910,
+     "rd": "auto",
+     "route_target": "65000:50010"
+    },
+    {
+     "vni": 120010,
+     "type": "L2",
+     "vlan": 10,
+     "rd": "auto",
+     "route_target": "65120:120010"
+    },
+    {
+     "vni": 120020,
+     "type": "L2",
+     "vlan": 20,
+     "rd": "auto",
+     "route_target": "65120:120020"
+    },
+    {
+     "vni": 120030,
+     "type": "L2",
+     "vlan": 30,
+     "rd": "auto",
+     "route_target": "65120:120030"
+    },
+    {
+     "vni": 120040,
+     "type": "L2",
+     "vlan": 40,
+     "rd": "auto",
+     "route_target": "65120:120040"
+    },
+    {
+     "vni": 120100,
+     "type": "L2",
+     "vlan": 100,
+     "rd": "auto",
+     "route_target": "65120:120100"
+    }
+   ],
+   "nve": {
+    "source_interface": "loopback1",
+    "primary": "10.120.241.13",
+    "secondary": "10.120.241.102"
+   },
+   "vpc": {
+    "domain": 122,
+    "peer": "DC2-NXLF-04",
+    "keepalive": "10.120.243.10",
+    "peer_link": "port-channel10"
+   }
+  },
+  {
+   "hostname": "DC2-NXLF-04",
+   "site": "DC2",
+   "role": "border-leaf",
+   "asn": 65224,
+   "router_id": "10.120.240.14",
+   "interfaces": {
+    "Ethernet1/49": {
+     "mtu": 9216,
+     "peer": "DC2-NXSP-01",
+     "address": "10.120.242.7/31"
+    },
+    "Ethernet1/50": {
+     "mtu": 9216,
+     "peer": "DC2-NXSP-02",
+     "address": "10.120.242.39/31"
+    },
+    "Vlan3900": {
+     "mtu": 9216,
+     "peer": "DC2-NXLF-03",
+     "address": "10.120.243.14/30"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.6",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.1",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.38",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.2",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-02",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.243.13",
+     "remote_as": 65223,
+     "peer": "DC2-NXLF-03",
+     "bfd": true
+    },
+    {
+     "step": "M2",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "10.120.99.2",
+     "remote_as": 65228,
+     "peer": "legacy core",
+     "bfd": false,
+     "until": "M6"
+    },
+    {
+     "step": "M4",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "10.120.244.73",
+     "remote_as": 65227,
+     "peer": "DC2-FW-01/02",
+     "bfd": true
+    }
+   ],
+   "vnis": [
+    {
+     "vni": 50010,
+     "type": "L3",
+     "vrf": "TRUST",
+     "vlan": 3910,
+     "rd": "auto",
+     "route_target": "65000:50010"
+    },
+    {
+     "vni": 120010,
+     "type": "L2",
+     "vlan": 10,
+     "rd": "auto",
+     "route_target": "65120:120010"
+    },
+    {
+     "vni": 120020,
+     "type": "L2",
+     "vlan": 20,
+     "rd": "auto",
+     "route_target": "65120:120020"
+    },
+    {
+     "vni": 120030,
+     "type": "L2",
+     "vlan": 30,
+     "rd": "auto",
+     "route_target": "65120:120030"
+    },
+    {
+     "vni": 120040,
+     "type": "L2",
+     "vlan": 40,
+     "rd": "auto",
+     "route_target": "65120:120040"
+    },
+    {
+     "vni": 120100,
+     "type": "L2",
+     "vlan": 100,
+     "rd": "auto",
+     "route_target": "65120:120100"
+    }
+   ],
+   "nve": {
+    "source_interface": "loopback1",
+    "primary": "10.120.241.14",
+    "secondary": "10.120.241.102"
+   },
+   "vpc": {
+    "domain": 122,
+    "peer": "DC2-NXLF-03",
+    "keepalive": "10.120.243.9",
+    "peer_link": "port-channel10"
+   }
+  },
+  {
+   "hostname": "DC2-NXBGW-01",
+   "site": "DC2",
+   "role": "bgw",
+   "asn": 65225,
+   "router_id": "10.120.240.21",
+   "interfaces": {
+    "Ethernet1/49": {
+     "mtu": 9216,
+     "peer": "DC2-NXSP-01",
+     "address": "10.120.242.9/31"
+    },
+    "Ethernet1/50": {
+     "mtu": 9216,
+     "peer": "DC2-NXSP-02",
+     "address": "10.120.242.41/31"
+    },
+    "Ethernet1/51": {
+     "mtu": 9216,
+     "peer": "DC1-NXBGW-01",
+     "address": "10.110.246.1/31",
+     "dci_carrier": "A"
+    },
+    "Ethernet1/52": {
+     "mtu": 9216,
+     "peer": "DC1-NXBGW-02",
+     "address": "10.120.246.2/31",
+     "dci_carrier": "B"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.8",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.1",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.40",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.2",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-02",
+     "bfd": false
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.246.0",
+     "remote_as": 65215,
+     "peer": "DC1-NXBGW-01",
+     "bfd": true
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.246.3",
+     "remote_as": 65216,
+     "peer": "DC1-NXBGW-02",
+     "bfd": true
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.21",
+     "remote_as": 65215,
+     "peer": "DC1-NXBGW-01",
+     "bfd": false
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.22",
+     "remote_as": 65216,
+     "peer": "DC1-NXBGW-02",
+     "bfd": false
+    },
+    {
+     "step": "M5",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "10.120.244.2",
+     "remote_as": 64512,
+     "peer": "AWS Direct Connect",
+     "bfd": true
+    },
+    {
+     "step": "M5",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "10.120.244.18",
+     "remote_as": 12076,
+     "peer": "Azure ExpressRoute",
+     "bfd": true
+    }
+   ],
+   "vnis": [
+    {
+     "vni": 50010,
+     "type": "L3",
+     "vrf": "TRUST",
+     "vlan": 3910,
+     "rd": "auto",
+     "route_target": "65000:50010"
+    }
+   ],
+   "nve": {
+    "source_interface": "loopback1",
+    "primary": "10.120.241.21"
+   },
+   "multisite": {
+    "site_id": 120,
+    "vip": "10.120.241.200",
+    "fabric_links": [
+     "Ethernet1/49",
+     "Ethernet1/50"
+    ],
+    "dci_links": [
+     "Ethernet1/51",
+     "Ethernet1/52"
+    ]
+   }
+  },
+  {
+   "hostname": "DC2-NXBGW-02",
+   "site": "DC2",
+   "role": "bgw",
+   "asn": 65226,
+   "router_id": "10.120.240.22",
+   "interfaces": {
+    "Ethernet1/49": {
+     "mtu": 9216,
+     "peer": "DC2-NXSP-01",
+     "address": "10.120.242.11/31"
+    },
+    "Ethernet1/50": {
+     "mtu": 9216,
+     "peer": "DC2-NXSP-02",
+     "address": "10.120.242.43/31"
+    },
+    "Ethernet1/51": {
+     "mtu": 9216,
+     "peer": "DC1-NXBGW-02",
+     "address": "10.110.246.3/31",
+     "dci_carrier": "A"
+    },
+    "Ethernet1/52": {
+     "mtu": 9216,
+     "peer": "DC1-NXBGW-01",
+     "address": "10.120.246.0/31",
+     "dci_carrier": "B"
+    }
+   },
+   "bgp": [
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.10",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-01",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.1",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-01",
+     "bfd": false
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.242.42",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-02",
+     "bfd": true
+    },
+    {
+     "step": "M1",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.120.240.2",
+     "remote_as": 65220,
+     "peer": "DC2-NXSP-02",
+     "bfd": false
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.110.246.2",
+     "remote_as": 65216,
+     "peer": "DC1-NXBGW-02",
+     "bfd": true
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "ipv4",
+     "neighbor": "10.120.246.1",
+     "remote_as": 65215,
+     "peer": "DC1-NXBGW-01",
+     "bfd": true
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.21",
+     "remote_as": 65215,
+     "peer": "DC1-NXBGW-01",
+     "bfd": false
+    },
+    {
+     "step": "M5",
+     "vrf": "default",
+     "afi": "evpn",
+     "neighbor": "10.110.240.22",
+     "remote_as": 65216,
+     "peer": "DC1-NXBGW-02",
+     "bfd": false
+    },
+    {
+     "step": "M5",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "10.120.244.10",
+     "remote_as": 64512,
+     "peer": "AWS Direct Connect",
+     "bfd": true
+    },
+    {
+     "step": "M5",
+     "vrf": "TRUST",
+     "afi": "ipv4",
+     "neighbor": "10.120.244.22",
+     "remote_as": 12076,
+     "peer": "Azure ExpressRoute",
+     "bfd": true
+    }
+   ],
+   "vnis": [
+    {
+     "vni": 50010,
+     "type": "L3",
+     "vrf": "TRUST",
+     "vlan": 3910,
+     "rd": "auto",
+     "route_target": "65000:50010"
+    }
+   ],
+   "nve": {
+    "source_interface": "loopback1",
+    "primary": "10.120.241.22"
+   },
+   "multisite": {
+    "site_id": 120,
+    "vip": "10.120.241.200",
+    "fabric_links": [
+     "Ethernet1/49",
+     "Ethernet1/50"
+    ],
+    "dci_links": [
+     "Ethernet1/51",
+     "Ethernet1/52"
+    ]
+   }
+  }
+ ]
+}
