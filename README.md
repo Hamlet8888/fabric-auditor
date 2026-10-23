@@ -13,6 +13,7 @@ python3 -m netauto.cli audit --expected examples/demo/expected-state.json       
 python3 -m netauto.cli audit --expected examples/demo/expected-state.json --site DC1 --step M4
 python3 -m netauto.cli audit --expected examples/demo/expected-state.json --format json
 python3 -m netauto.cli inventory --expected examples/demo/expected-state.json             # what the design defines
+python3 -m netauto.cli audit --expected private/expected-state.json --source nxapi       # live switches
 ```
 
 Exit status: `0` compliant, `1` a check failed or a device's state could not be collected, `2` usage or input error.
@@ -58,17 +59,55 @@ the last step.
 |---|---|
 | `netauto/expected.py` | Loads and validates `expected-state.json` from network-design |
 | `netauto/collector.py` | `FabricCollector`: concurrent (asyncio) collection from a `StateSource`; documents the state schema |
+| `netauto/nxapi.py` | NX-API JSON-RPC client and `NxapiSource`, the live collector |
+| `netauto/nxos.py` | NX-OS show-command and running-config parsers into the state schema |
 | `netauto/auditor.py` | `Auditor`: the six checks and the vPC pair comparison, returning an `AuditReport` |
 | `netauto/cli.py` | `argparse` CLI with colourized per-site tables or JSON |
 | `netauto/mock.py` | Synthesizes compliant state snapshots from the expected state, at any step |
 | `examples/demo/expected-state.json` | The fictional DC1/DC2 demo fabric, as network-design writes it |
 | `examples/demo/state/` | Compliant snapshots of every demo switch at the last step |
 
-## State sources
+## Live switches (NX-API)
+
+`--source nxapi` collects state from the switches themselves, concurrently, on the mgmt0 address that
+network-design puts in the expected state:
+
+```bash
+export NETAUTO_USERNAME=netauto                   # or leave unset and be prompted
+read -s NETAUTO_PASSWORD && export NETAUTO_PASSWORD
+python3 -m netauto.cli audit   --expected private/expected-state.json --source nxapi --step M1
+python3 -m netauto.cli collect --expected private/expected-state.json --out private/state/2026-10-23 --raw
+```
+
+`collect` saves the normalized snapshots (audit them later with `--state-dir`) and, with `--raw`, every raw NX-API
+answer under `raw/`. Keep both in `private/`, which git ignores.
+
+| Option | Use |
+|---|---|
+| `--hosts FILE` | JSON of hostname to `address` or `address:port`, when you reach the switches some other way than mgmt0 |
+| `--ca-file FILE` | CA bundle that signed the switch certificates |
+| `--insecure` | Skip certificate checks (lab switches with self-signed certificates only) |
+| `--concurrency`, `--timeout` | Switches queried at once (16) and the per-switch time limit (30 s) |
+
+On each switch: `feature nxapi`, `nxapi use-vrf management`, and HTTPS from the management subnets. A read-only
+role (`network-operator`) is enough: only show commands are sent.
+
+Per switch, the collector runs `show interface`, `show bgp ipv4 unicast summary vrf all`, `show bgp l2vpn evpn
+summary`, `show bfd neighbors vrf all` and `show running-config`; on VTEPs also `show nve vni`, `show nve interface
+nve1 detail` and the EVPN route distinguishers; `show vpc brief` on leafs and `show nve multisite fabric-links` /
+`dci-links` on BGWs. Route targets, the vPC keepalive destination and the Multi-Site site ID come from the
+running-config.
+
+**Validate on your release first.** The parsers in [`netauto/nxos.py`](netauto/nxos.py) follow the NX-OS 9.3/10.x
+JSON field names and are tested against a fake switch, not real hardware yet. A release that names a field
+differently shows up as an audit mismatch, not a crash: run `collect --raw` against one leaf, one BGW and one spine,
+and adjust the parser from the raw output.
+
+## Snapshots and other sources
 
 The auditor only reads the normalized per-device document described in [`netauto/collector.py`](netauto/collector.py).
-`SnapshotSource` reads it from `<state-dir>/<hostname>.json`. A live driver (NX-API, gNMI) plugs in by subclassing
-`StateSource` and returning the same shape. **No live driver ships yet.**
+`SnapshotSource` reads it from `<state-dir>/<hostname>.json` and `NxapiSource` builds it live. Another driver (gNMI,
+SSH) plugs in by subclassing `StateSource` and returning the same shape.
 
 To try the auditor without a lab, synthesize snapshots for any step and edit them:
 

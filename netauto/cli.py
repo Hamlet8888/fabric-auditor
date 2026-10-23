@@ -6,11 +6,16 @@ network-automation-tools command-line interface.
     python3 -m netauto.cli audit --expected examples/demo/expected-state.json --format json
     python3 -m netauto.cli inventory --expected examples/demo/expected-state.json
 
+    # live, over NX-API (credentials from NETAUTO_USERNAME / NETAUTO_PASSWORD or a prompt)
+    python3 -m netauto.cli audit --expected private/expected-state.json --source nxapi
+    python3 -m netauto.cli collect --expected private/expected-state.json --out private/state --raw
+
 ``--expected`` is the ``expected-state.json`` that network-design writes next to the
 configs. ``audit`` loads state from ``--state-dir`` (default: ``state/`` next to that
-file), runs the compliance checks at ``--step`` (default: the last migration step) and
+file) or, with ``--source nxapi``, from the switches themselves; runs the compliance checks at ``--step`` (default: the last migration step) and
 prints a status table per site, followed by every mismatch with its expected and actual
-value.
+value. ``collect`` saves live state as snapshots (and, with ``--raw``, the raw NX-API
+output) to audit later or offline.
 
 Exit status: 0 when everything audited is compliant, 1 when any check fails or a device's
 state could not be collected, 2 for usage or input errors.
@@ -22,6 +27,7 @@ is given.
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 import os
 import sys
@@ -31,7 +37,7 @@ from typing import List, Optional, Sequence, TextIO, Tuple
 from netauto import __version__
 from netauto.auditor import (CHECK_COLLECTION, CHECK_TITLES, CHECKS, ERROR, FAIL, PASS, SKIP,
                              AuditReport, Auditor, CheckResult)
-from netauto.collector import FabricCollector, SnapshotSource
+from netauto.collector import CollectionResult, FabricCollector, SnapshotSource, StateSource
 from netauto.expected import Design, DesignError, load_design
 
 EXIT_OK = 0
@@ -204,15 +210,46 @@ def _load(args: argparse.Namespace) -> Design:
     return design
 
 
+def _nxapi_source(args: argparse.Namespace, keep_raw: bool = False) -> StateSource:
+    from netauto.nxapi import NxapiSource
+
+    username = os.environ.get("NETAUTO_USERNAME")
+    password = os.environ.get("NETAUTO_PASSWORD")
+    if not username or not password:
+        if not sys.stdin.isatty():
+            raise DesignError("set NETAUTO_USERNAME and NETAUTO_PASSWORD (no terminal to prompt on)")
+        username = username or input("NX-API username: ")
+        password = password or getpass.getpass("NX-API password: ")
+    hosts = {}
+    if args.hosts:
+        try:
+            hosts = json.loads(Path(args.hosts).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise DesignError(f"cannot read --hosts {args.hosts}: {exc}") from None
+        if not isinstance(hosts, dict):
+            raise DesignError("--hosts must be a JSON object of hostname -> address")
+    return NxapiSource(username, password, hosts=hosts, keep_raw=keep_raw, scheme=args.scheme, port=args.port,
+                       verify=not args.insecure, ca_file=args.ca_file, timeout=args.timeout)
+
+
+def _collect(args: argparse.Namespace, design: Design, source: StateSource) -> CollectionResult:
+    collector = FabricCollector(design, source, concurrency=args.concurrency, timeout=args.timeout)
+    return collector.collect(design.select(args.site))
+
+
 def cmd_audit(args: argparse.Namespace, out: TextIO) -> int:
     design = _load(args)
     auditor = Auditor(design, args.step)
-    state_dir = Path(args.state_dir) if args.state_dir else Path(args.expected).resolve().parent / "state"
-    if not state_dir.is_dir():
-        raise DesignError(f"state directory not found: {state_dir}")
+    if args.source == "nxapi":
+        source = _nxapi_source(args)
+        where = "live"
+    else:
+        state_dir = Path(args.state_dir) if args.state_dir else Path(args.expected).resolve().parent / "state"
+        if not state_dir.is_dir():
+            raise DesignError(f"state directory not found: {state_dir}")
+        source, where = SnapshotSource(state_dir), str(state_dir)
 
-    collector = FabricCollector(design, SnapshotSource(state_dir), concurrency=args.concurrency, timeout=args.timeout)
-    collection = collector.collect(design.select(args.site))
+    collection = _collect(args, design, source)
     report = auditor.audit(collection, site=args.site)
 
     if args.format == "json":
@@ -222,8 +259,27 @@ def cmd_audit(args: argparse.Namespace, out: TextIO) -> int:
         out.write("\n")
     else:
         style = Style(_use_color(args.color, out))
-        render_table(design, report, args.site, style, out, f"{collection.source} ({state_dir})")
+        render_table(design, report, args.site, style, out, f"{collection.source} ({where})")
     return EXIT_OK if report.compliant else EXIT_NONCOMPLIANT
+
+
+def cmd_collect(args: argparse.Namespace, out: TextIO) -> int:
+    design = _load(args)
+    source = _nxapi_source(args, keep_raw=args.raw)
+    collection = _collect(args, design, source)
+    target = Path(args.out)
+    target.mkdir(parents=True, exist_ok=True)
+    for hostname, state in sorted(collection.states.items()):
+        (target / f"{hostname}.json").write_text(json.dumps(state, indent=1) + "\n", encoding="utf-8")
+    if args.raw:
+        raw_dir = target / "raw"
+        raw_dir.mkdir(exist_ok=True)
+        for hostname, raw in sorted(source.raw.items()):  # type: ignore[attr-defined]
+            (raw_dir / f"{hostname}.json").write_text(json.dumps(raw, indent=1) + "\n", encoding="utf-8")
+    out.write(f"wrote {len(collection.states)} snapshots to {target}\n")
+    for hostname, error in sorted(collection.errors.items()):
+        out.write(f"  {hostname}: {error}\n")
+    return EXIT_OK if collection.ok else EXIT_NONCOMPLIANT
 
 
 def cmd_inventory(args: argparse.Namespace, out: TextIO) -> int:
@@ -247,19 +303,35 @@ def build_parser() -> argparse.ArgumentParser:
     common.add_argument("--color", choices=("auto", "always", "never"), default="auto",
                         help="colourize output (default: auto)")
 
-    audit = sub.add_parser("audit", parents=[common], help="compare fabric state with the design",
+    live = argparse.ArgumentParser(add_help=False)
+    live.add_argument("--hosts", metavar="FILE",
+                      help="JSON of hostname -> address to connect to (default: mgmt0 from the expected state)")
+    live.add_argument("--insecure", action="store_true", help="don't verify the switches' TLS certificates")
+    live.add_argument("--ca-file", metavar="FILE", help="CA bundle that signed the switches' certificates")
+    live.add_argument("--port", type=_positive_int, metavar="N", help="NX-API port (default: 443 for https)")
+    live.add_argument("--scheme", choices=("https", "http"), default="https", help=argparse.SUPPRESS)
+    live.add_argument("--concurrency", type=_positive_int, default=16, metavar="N",
+                      help="devices collected in parallel (default: 16)")
+    live.add_argument("--timeout", type=float, default=30.0, metavar="SECONDS",
+                      help="per-device collection timeout (default: 30)")
+
+    audit = sub.add_parser("audit", parents=[common, live], help="compare fabric state with the design",
                            description="Run the links, BGP/BFD, EVPN RT/RD, VNI-to-VLAN, NVE/Multi-Site "
                                        "and vPC compliance checks.")
     audit.add_argument("--state-dir", metavar="DIR",
                        help="directory of <hostname>.json state snapshots (default: state/ next to the "
                             "expected-state file)")
+    audit.add_argument("--source", choices=("snapshots", "nxapi"), default="snapshots",
+                       help="where state comes from (default: snapshots)")
     audit.add_argument("--step", metavar="ID", help="migration step the fabric has reached (default: the last)")
     audit.add_argument("--format", choices=("table", "json"), default="table", help="output format")
-    audit.add_argument("--concurrency", type=_positive_int, default=16, metavar="N",
-                       help="devices collected in parallel (default: 16)")
-    audit.add_argument("--timeout", type=float, default=30.0, metavar="SECONDS",
-                       help="per-device collection timeout (default: 30)")
     audit.set_defaults(func=cmd_audit)
+
+    collect = sub.add_parser("collect", parents=[common, live], help="save live NX-API state as snapshots",
+                             description="Collect every switch over NX-API and write <hostname>.json snapshots.")
+    collect.add_argument("--out", required=True, metavar="DIR", help="folder for the snapshots")
+    collect.add_argument("--raw", action="store_true", help="also save the raw NX-API output under DIR/raw/")
+    collect.set_defaults(func=cmd_collect)
 
     inv = sub.add_parser("inventory", parents=[common], help="show the devices and steps the design defines")
     inv.set_defaults(func=cmd_inventory)
