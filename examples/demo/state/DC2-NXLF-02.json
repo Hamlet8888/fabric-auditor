@@ -34,35 +34,40 @@
     "afi": "ipv4",
     "neighbor": "10.120.242.2",
     "remote_as": 65220,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.120.240.1",
     "remote_as": 65220,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "ipv4",
     "neighbor": "10.120.242.34",
     "remote_as": 65220,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "evpn",
     "neighbor": "10.120.240.2",
     "remote_as": 65220,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    },
    {
     "vrf": "default",
     "afi": "ipv4",
     "neighbor": "10.120.243.5",
     "remote_as": 65221,
-    "state": "Established"
+    "state": "Established",
+    "uptime": "3w2d"
    }
   ]
  },
@@ -196,5 +201,329 @@
   "peer_link": "port-channel10",
   "peer_link_status": "up",
   "consistency": "success"
- }
+ },
+ "routes": [
+  {
+   "vrf": "TRUST",
+   "prefix": "0.0.0.0/0",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.241.13",
+    "10.120.241.14"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.110.10.0/24",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.241.200"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.110.20.0/24",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.241.200"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.110.30.0/24",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.241.200"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.110.40.0/24",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.241.200"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.110.100.0/24",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.241.200"
+   ],
+   "encap": "vxlan"
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.120.10.0/24",
+   "protocol": "direct",
+   "next_hops": [
+    "Vlan10"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.120.20.0/24",
+   "protocol": "direct",
+   "next_hops": [
+    "Vlan20"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.120.30.0/24",
+   "protocol": "direct",
+   "next_hops": [
+    "Vlan30"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.120.40.0/24",
+   "protocol": "direct",
+   "next_hops": [
+    "Vlan40"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "TRUST",
+   "prefix": "10.120.100.0/24",
+   "protocol": "direct",
+   "next_hops": [
+    "Vlan100"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.240.1/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.2",
+    "10.120.242.34"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.240.2/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.2",
+    "10.120.242.34"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.240.11/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.2",
+    "10.120.242.34"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.240.13/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.2",
+    "10.120.242.34"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.240.14/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.2",
+    "10.120.242.34"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.240.21/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.2",
+    "10.120.242.34"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.240.22/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.2",
+    "10.120.242.34"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.241.11/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.2",
+    "10.120.242.34"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.241.13/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.2",
+    "10.120.242.34"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.241.14/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.2",
+    "10.120.242.34"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.241.21/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.2",
+    "10.120.242.34"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.241.22/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.2",
+    "10.120.242.34"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.241.102/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.2",
+    "10.120.242.34"
+   ],
+   "encap": null
+  },
+  {
+   "vrf": "default",
+   "prefix": "10.120.241.200/32",
+   "protocol": "bgp",
+   "next_hops": [
+    "10.120.242.2",
+    "10.120.242.34"
+   ],
+   "encap": null
+  }
+ ],
+ "hosts": [
+  {
+   "vrf": "TRUST",
+   "vlan": 10,
+   "ip": "10.120.10.10",
+   "mac": "0050.5601.000a",
+   "source": "local",
+   "interface": "port-channel100"
+  },
+  {
+   "vrf": "TRUST",
+   "vlan": 20,
+   "ip": "10.120.20.10",
+   "mac": "0050.5601.0014",
+   "source": "local",
+   "interface": "port-channel100"
+  },
+  {
+   "vrf": "TRUST",
+   "vlan": 30,
+   "ip": "10.120.30.10",
+   "mac": "0050.5601.001e",
+   "source": "local",
+   "interface": "port-channel100"
+  },
+  {
+   "vrf": "TRUST",
+   "vlan": 40,
+   "ip": "10.120.40.10",
+   "mac": "0050.5601.0028",
+   "source": "local",
+   "interface": "port-channel100"
+  },
+  {
+   "vrf": "TRUST",
+   "vlan": 100,
+   "ip": "10.120.100.10",
+   "mac": "0050.5601.0064",
+   "source": "local",
+   "interface": "port-channel100"
+  },
+  {
+   "vrf": "TRUST",
+   "vlan": 10,
+   "ip": "10.120.10.11",
+   "mac": "0050.5601.010a",
+   "source": "evpn",
+   "vtep": "10.120.241.102"
+  },
+  {
+   "vrf": "TRUST",
+   "vlan": 20,
+   "ip": "10.120.20.11",
+   "mac": "0050.5601.0114",
+   "source": "evpn",
+   "vtep": "10.120.241.102"
+  },
+  {
+   "vrf": "TRUST",
+   "vlan": 30,
+   "ip": "10.120.30.11",
+   "mac": "0050.5601.011e",
+   "source": "evpn",
+   "vtep": "10.120.241.102"
+  },
+  {
+   "vrf": "TRUST",
+   "vlan": 40,
+   "ip": "10.120.40.11",
+   "mac": "0050.5601.0128",
+   "source": "evpn",
+   "vtep": "10.120.241.102"
+  },
+  {
+   "vrf": "TRUST",
+   "vlan": 100,
+   "ip": "10.120.100.11",
+   "mac": "0050.5601.0164",
+   "source": "evpn",
+   "vtep": "10.120.241.102"
+  }
+ ]
 }

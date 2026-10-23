@@ -1,0 +1,3 @@
+2026 Oct 23 09:12:44 DC1-NXLF-03 %L2FM-4-L2FM_MAC_MOVE: Mac 0050.5600.0114 in vlan 20 has moved from port-channel101 to nve-peer1 10.110.241.101
+2026 Oct 23 09:12:44 DC1-NXLF-03 %L2FM-4-L2FM_MAC_MOVE: Mac 0050.5600.0114 in vlan 20 has moved from nve-peer1 10.110.241.101 to port-channel101
+2026 Oct 23 11:30:00 DC1-NXLF-03 %VSHD-5-VSHD_SYSLOG_CONFIG_I: Configured from vty by netops on 10.110.250.10@pts/1

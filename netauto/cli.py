@@ -10,15 +10,23 @@ network-automation-tools command-line interface.
     python3 -m netauto.cli audit --expected private/expected-state.json --source nxapi
     python3 -m netauto.cli collect --expected private/expected-state.json --out private/state --raw
 
+    # troubleshooting
+    python3 -m netauto.cli diff private/state/before private/state/after
+    python3 -m netauto.cli path 10.110.10.10 10.120.30.11 --expected examples/demo/expected-state.json
+    python3 -m netauto.cli bgp --expected examples/demo/expected-state.json --site DC1
+    python3 -m netauto.cli timeline --logs examples/demo/logs --since 30m
+
 ``--expected`` is the ``expected-state.json`` that network-design writes next to the
 configs. ``audit`` loads state from ``--state-dir`` (default: ``state/`` next to that
 file) or, with ``--source nxapi``, from the switches themselves; runs the compliance checks at ``--step`` (default: the last migration step) and
 prints a status table per site, followed by every mismatch with its expected and actual
 value. ``collect`` saves live state as snapshots (and, with ``--raw``, the raw NX-API
-output) to audit later or offline.
+output, and with ``--logs`` the switch logs) to audit later or offline. ``diff``, ``path``,
+``bgp`` and ``timeline`` are the troubleshooting commands; see their ``--help``.
 
-Exit status: 0 when everything audited is compliant, 1 when any check fails or a device's
-state could not be collected, 2 for usage or input errors.
+Exit status: 0 when everything audited is compliant (or, for the troubleshooting commands,
+nothing is wrong), 1 when any check fails, a problem is found or a device's state could not be
+collected, 2 for usage or input errors.
 
 Colour is used when stdout is a terminal, unless ``NO_COLOR`` is set or ``--color never``
 is given.
@@ -31,8 +39,9 @@ import getpass
 import json
 import os
 import sys
+from datetime import timedelta
 from pathlib import Path
-from typing import List, Optional, Sequence, TextIO, Tuple
+from typing import Dict, List, Optional, Sequence, TextIO, Tuple
 
 from netauto import __version__
 from netauto.auditor import (CHECK_COLLECTION, CHECK_TITLES, CHECKS, ERROR, FAIL, PASS, SKIP,
@@ -237,18 +246,20 @@ def _collect(args: argparse.Namespace, design: Design, source: StateSource) -> C
     return collector.collect(design.select(args.site))
 
 
+def _source(args: argparse.Namespace) -> Tuple[StateSource, str]:
+    """Snapshots from --state-dir (default: state/ next to --expected) or live NX-API with --source nxapi."""
+    if args.source == "nxapi":
+        return _nxapi_source(args), "live"
+    state_dir = Path(args.state_dir) if args.state_dir else Path(args.expected).resolve().parent / "state"
+    if not state_dir.is_dir():
+        raise DesignError(f"state directory not found: {state_dir}")
+    return SnapshotSource(state_dir), str(state_dir)
+
+
 def cmd_audit(args: argparse.Namespace, out: TextIO) -> int:
     design = _load(args)
     auditor = Auditor(design, args.step)
-    if args.source == "nxapi":
-        source = _nxapi_source(args)
-        where = "live"
-    else:
-        state_dir = Path(args.state_dir) if args.state_dir else Path(args.expected).resolve().parent / "state"
-        if not state_dir.is_dir():
-            raise DesignError(f"state directory not found: {state_dir}")
-        source, where = SnapshotSource(state_dir), str(state_dir)
-
+    source, where = _source(args)
     collection = _collect(args, design, source)
     report = auditor.audit(collection, site=args.site)
 
@@ -277,9 +288,225 @@ def cmd_collect(args: argparse.Namespace, out: TextIO) -> int:
         for hostname, raw in sorted(source.raw.items()):  # type: ignore[attr-defined]
             (raw_dir / f"{hostname}.json").write_text(json.dumps(raw, indent=1) + "\n", encoding="utf-8")
     out.write(f"wrote {len(collection.states)} snapshots to {target}\n")
-    for hostname, error in sorted(collection.errors.items()):
+    errors = dict(collection.errors)
+    if args.logs:
+        import asyncio
+
+        from netauto.nxapi import collect_logs
+
+        logs, log_errors = asyncio.run(collect_logs(source, design.select(args.site),  # type: ignore[arg-type]
+                                                    args.concurrency, args.timeout))
+        log_dir = target / "logs"
+        log_dir.mkdir(exist_ok=True)
+        for hostname, text in sorted(logs.items()):
+            (log_dir / f"{hostname}.log").write_text(text, encoding="utf-8")
+        out.write(f"wrote {len(logs)} logs to {log_dir}\n")
+        for hostname, error in log_errors.items():
+            errors.setdefault(hostname, f"log: {error}")
+    for hostname, error in sorted(errors.items()):
         out.write(f"  {hostname}: {error}\n")
-    return EXIT_OK if collection.ok else EXIT_NONCOMPLIANT
+    return EXIT_OK if not errors else EXIT_NONCOMPLIANT
+
+
+def cmd_diff(args: argparse.Namespace, out: TextIO) -> int:
+    from netauto import diff
+
+    try:
+        before, after = diff.load_states(args.before), diff.load_states(args.after)
+    except ValueError as exc:
+        raise DesignError(str(exc)) from None
+    devices = None
+    if args.expected:
+        design = _load(args)
+        devices = [d.hostname for d in design.select(args.site)]
+    elif args.site:
+        raise DesignError("--site needs --expected to know which switches belong to the site")
+    diffs = diff.diff_fabric(before, after, devices)
+
+    if args.format == "json":
+        json.dump(diff.to_dict(diffs), out, indent=2, default=str)
+        out.write("\n")
+    else:
+        style = Style(_use_color(args.color, out))
+        colour = {diff.LOST: ("red", "bold"), diff.CHANGED: ("yellow",), diff.GAINED: ("green",)}
+        w = out.write
+        w(style("netauto diff", "bold") + f"  {args.before}  ->  {args.after}\n")
+        if not diffs:
+            w("\nNo differences.\n")
+        for kind in diff.KINDS:
+            rows = [d for d in diffs if d.kind == kind]
+            if not rows:
+                continue
+            w("\n" + style(f"{kind} ({len(rows)})", *colour[kind]) + "\n")
+            for d in rows:
+                w(f"  {d.device:<16} {d.fact}\n")
+                w(style(f"      {_fmt(d.before)}  ->  {_fmt(d.after)}", "dim") + "\n")
+        counts = ", ".join(f"{sum(1 for d in diffs if d.kind == k)} {k.lower()}" for k in diff.KINDS)
+        w(f"\nSummary: {counts}\n")
+    kinds = {d.kind for d in diffs}
+    failing = {"lost": {diff.LOST}, "changed": {diff.LOST, diff.CHANGED}, "any": set(diff.KINDS)}[args.fail_on]
+    return EXIT_NONCOMPLIANT if kinds & failing else EXIT_OK
+
+
+def cmd_path(args: argparse.Namespace, out: TextIO) -> int:
+    from netauto import path
+
+    design = _load(args)
+    source, where = _source(args)
+    collection = _collect(args, design, source)
+    try:
+        result = path.trace(design, collection.states, args.src, args.dst)
+    except ValueError as exc:
+        raise DesignError(str(exc)) from None
+
+    if args.format == "json":
+        doc = result.to_dict()
+        doc["collection_errors"] = collection.errors
+        json.dump(doc, out, indent=2)
+        out.write("\n")
+    else:
+        style = Style(_use_color(args.color, out))
+        w = out.write
+        w(style("netauto path", "bold") + f"  {args.src} -> {args.dst}  "
+          + style(f"[{collection.source} ({where})]", "dim") + "\n\n")
+        for n, hop in enumerate(result.hops, 1):
+            mark = style("ok", "green") if hop.ok else style("BROKEN", "red", "bold")
+            w(f"{n:>2}. {hop.device:<16} {_pad(mark, 'ok' if hop.ok else 'BROKEN', 7)} {hop.action}\n")
+            for line in hop.detail:
+                w(style(f"{'':<28}{line}", "dim") + "\n")
+        verdict = {"delivered": style("delivered", "green"), "leaves fabric": style("leaves the fabric", "green"),
+                   "broken": style("broken", "red", "bold")}[result.result]
+        w(f"\nResult: {verdict}" + (f" at {result.hops[-1].device}" if not result.ok else "") + "\n")
+        for hostname, error in sorted(collection.errors.items()):
+            w(style(f"  not collected: {hostname}: {error}", "yellow") + "\n")
+    return EXIT_OK if result.ok else EXIT_NONCOMPLIANT
+
+
+def cmd_bgp(args: argparse.Namespace, out: TextIO) -> int:
+    from netauto import bgp
+
+    design = _load(args)
+    if args.step:
+        design.check_step(args.step)
+    devices = design.select(args.site)
+    if args.device:
+        devices = [d for d in devices if d.hostname in args.device]
+        unknown = set(args.device) - {d.hostname for d in devices}
+        if unknown:
+            raise DesignError(f"not in the design{' at site ' + args.site if args.site else ''}: "
+                              f"{', '.join(sorted(unknown))}")
+    source, where = _source(args)
+    # The peers' side matters too, so collect every switch the selected ones peer with.
+    peers = {s.peer for d in devices for s in d.sessions}
+    targets = [d for d in design.devices if d in devices or d.hostname in peers]
+    collector = FabricCollector(design, source, concurrency=args.concurrency, timeout=args.timeout)
+    collection = collector.collect(targets)
+    findings = bgp.Doctor(design, collection.states, args.step).examine(devices)
+    failed = [f for f in findings if f.status in (bgp.MISSING, bgp.DOWN)]
+
+    if args.format == "json":
+        doc = bgp.to_dict(findings)
+        doc["collection_errors"] = collection.errors
+        json.dump(doc, out, indent=2)
+        out.write("\n")
+    else:
+        style = Style(_use_color(args.color, out))
+        colour = {bgp.MISSING: ("red", "bold"), bgp.DOWN: ("red", "bold"), bgp.FLAPPED: ("yellow",),
+                  bgp.OK: ("green",)}
+        w = out.write
+        w(style("netauto bgp", "bold") + f"  step {args.step or design.final_step}  "
+          + style(f"[{collection.source} ({where})]", "dim") + "\n\n")
+        shown = [f for f in findings if args.all or f.status != bgp.OK]
+        if not shown:
+            w(f"All {len(findings)} sessions the design expects up are Established.\n")
+        for f in shown:
+            label = f.status.upper()
+            w(f"{f.device:<16} -> {f.peer:<20} {f.vrf}/{f.afi} {f.neighbor}  "
+              + style(label, *colour[f.status])
+              + (f" ({f.state}{', ' + f.uptime if f.uptime and f.uptime != 'never' else ''})" if f.state else "")
+              + "\n")
+            for c in f.causes:
+                w(f"    - {c}\n")
+            if f.causes:
+                w("\n")
+        counts = ", ".join(f"{sum(1 for f in findings if f.status == k)} {k}" for k in bgp.STATUSES)
+        w(f"\nSummary: {counts}\n")
+        for hostname, error in sorted(collection.errors.items()):
+            w(style(f"  not collected: {hostname}: {error}", "yellow") + "\n")
+    return EXIT_NONCOMPLIANT if failed else EXIT_OK
+
+
+def cmd_timeline(args: argparse.Namespace, out: TextIO) -> int:
+    from netauto import timeline
+
+    devices = args.device
+    if args.expected:
+        design = _load(args)
+        site_hosts = [d.hostname for d in design.select(args.site)]
+        devices = [h for h in site_hosts if not args.device or h in args.device]
+    elif args.site or args.source == "nxapi":
+        raise DesignError("--site and --source nxapi need --expected to know the switches")
+    errors: Dict[str, str] = {}
+    if args.source == "nxapi":
+        import asyncio
+
+        from netauto.nxapi import collect_logs
+
+        source = _nxapi_source(args)
+        targets = [design.device(h) for h in devices]
+        logs, errors = asyncio.run(collect_logs(source, targets, args.concurrency, args.timeout))  # type: ignore
+        where = "live"
+    else:
+        if not args.logs:
+            raise DesignError("give --logs DIR (from `netauto collect --logs`) or --source nxapi")
+        try:
+            logs = timeline.load_logs(args.logs)
+        except ValueError as exc:
+            raise DesignError(str(exc)) from None
+        where = str(args.logs)
+    try:
+        tl = timeline.build(logs, devices, args.since, args.until, args.all)
+    except ValueError as exc:
+        raise DesignError(str(exc)) from None
+
+    if args.format == "json":
+        doc = tl.to_dict()
+        doc["collection_errors"] = errors
+        json.dump(doc, out, indent=2)
+        out.write("\n")
+        return EXIT_NONCOMPLIANT if tl.first_failure else EXIT_OK
+
+    style = Style(_use_color(args.color, out))
+    colour = {timeline.DOWN: ("red", "bold"), timeline.WARN: ("yellow",), timeline.UP: ("green",),
+              timeline.INFO: ("dim",)}
+    w = out.write
+    span = f", {tl.events[0].time:%Y-%m-%d %H:%M:%S} to {tl.events[-1].time:%Y-%m-%d %H:%M:%S}" if tl.events else ""
+    w(style("netauto timeline", "bold") + f"  {len(tl.events)} events from {len(tl.devices)} switches{span}  "
+      + style(f"[{where}]", "dim") + "\n")
+    day = None
+    width = max((len(e.device) for e in tl.events), default=0)
+    for e in tl.events:
+        if e.time.date() != day:
+            day = e.time.date()
+            w(f"\n{day:%Y-%m-%d}\n")
+        mark = style(f"{e.kind.upper():<4}", *colour[e.kind])
+        first = style(" <- first failure", "red", "bold") if e is tl.first_failure else ""
+        w(f"  {e.time:%H:%M:%S}  {e.device:<{width}}  {mark}  {e.message}" + style(f"  [{e.tag}]", "dim")
+          + first + "\n")
+    if not tl.events:
+        w("\nNo events" + (" (use --all to see every log line)" if not args.all else "") + ".\n")
+    if tl.first_failure:
+        f = tl.first_failure
+        after = [e for e in tl.events if f.time <= e.time <= f.time + timedelta(seconds=args.window)
+                 and e is not f and e.kind in (timeline.DOWN, timeline.WARN)]
+        w("\n" + style("First failure: ", "bold") + f"{f.time:%Y-%m-%d %H:%M:%S} {f.device}: {f.message}\n")
+        if after:
+            hosts = sorted({e.device for e in after})
+            w(f"  followed within {args.window}s by {len(after)} more failure(s) on {', '.join(hosts)}: "
+              "most likely consequences of it\n")
+    for hostname, error in sorted(errors.items()):
+        w(style(f"  not collected: {hostname}: {error}", "yellow") + "\n")
+    return EXIT_NONCOMPLIANT if tl.first_failure else EXIT_OK
 
 
 def cmd_inventory(args: argparse.Namespace, out: TextIO) -> int:
@@ -291,7 +518,7 @@ def cmd_inventory(args: argparse.Namespace, out: TextIO) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="netauto",
-        description="Check a BGP EVPN/VXLAN fabric against the expected state from network-design.",
+        description="Check and troubleshoot a BGP EVPN/VXLAN fabric against the expected state from network-design.",
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", metavar="COMMAND")
@@ -315,14 +542,16 @@ def build_parser() -> argparse.ArgumentParser:
     live.add_argument("--timeout", type=float, default=30.0, metavar="SECONDS",
                       help="per-device collection timeout (default: 30)")
 
-    audit = sub.add_parser("audit", parents=[common, live], help="compare fabric state with the design",
+    snapshots = argparse.ArgumentParser(add_help=False)
+    snapshots.add_argument("--state-dir", metavar="DIR",
+                           help="directory of <hostname>.json state snapshots (default: state/ next to the "
+                                "expected-state file)")
+    snapshots.add_argument("--source", choices=("snapshots", "nxapi"), default="snapshots",
+                           help="where state comes from (default: snapshots)")
+
+    audit = sub.add_parser("audit", parents=[common, live, snapshots], help="compare fabric state with the design",
                            description="Run the links, BGP/BFD, EVPN RT/RD, VNI-to-VLAN, NVE/Multi-Site "
                                        "and vPC compliance checks.")
-    audit.add_argument("--state-dir", metavar="DIR",
-                       help="directory of <hostname>.json state snapshots (default: state/ next to the "
-                            "expected-state file)")
-    audit.add_argument("--source", choices=("snapshots", "nxapi"), default="snapshots",
-                       help="where state comes from (default: snapshots)")
     audit.add_argument("--step", metavar="ID", help="migration step the fabric has reached (default: the last)")
     audit.add_argument("--format", choices=("table", "json"), default="table", help="output format")
     audit.set_defaults(func=cmd_audit)
@@ -331,7 +560,61 @@ def build_parser() -> argparse.ArgumentParser:
                              description="Collect every switch over NX-API and write <hostname>.json snapshots.")
     collect.add_argument("--out", required=True, metavar="DIR", help="folder for the snapshots")
     collect.add_argument("--raw", action="store_true", help="also save the raw NX-API output under DIR/raw/")
+    collect.add_argument("--logs", action="store_true",
+                         help="also save each switch's `show logging logfile` under DIR/logs/ (for `netauto timeline`)")
     collect.set_defaults(func=cmd_collect)
+
+    dif = sub.add_parser("diff", help="compare two state snapshots (before/after a change)",
+                         description="Compare two folders of state snapshots, e.g. from `netauto collect` before "
+                                     "and after a change, and list what was lost, changed or gained.")
+    dif.add_argument("before", metavar="BEFORE", help="folder of <hostname>.json snapshots before the change")
+    dif.add_argument("after", metavar="AFTER", help="folder of <hostname>.json snapshots after the change")
+    dif.add_argument("--expected", metavar="FILE", help="expected-state.json, to order switches and use --site")
+    dif.add_argument("--site", metavar="CODE", help="limit to one site (needs --expected)")
+    dif.add_argument("--format", choices=("table", "json"), default="table", help="output format")
+    dif.add_argument("--fail-on", choices=("lost", "changed", "any"), default="lost",
+                     help="exit 1 when there is anything of this kind or worse (default: lost)")
+    dif.add_argument("--color", choices=("auto", "always", "never"), default="auto",
+                     help="colourize output (default: auto)")
+    dif.set_defaults(func=cmd_diff)
+
+    pth = sub.add_parser("path", parents=[common, live, snapshots], help="explain how (or why not) A reaches B",
+                         description="Follow a packet from host SRC to DST through the fabric, switch by switch, "
+                                     "using each switch's host and route tables, and show where the path breaks.")
+    pth.add_argument("src", metavar="SRC", help="source host IP, e.g. 10.110.10.10")
+    pth.add_argument("dst", metavar="DST", help="destination IP: a host, or anything outside the fabric")
+    pth.add_argument("--format", choices=("table", "json"), default="table", help="output format")
+    pth.set_defaults(func=cmd_path)
+
+    bg = sub.add_parser("bgp", parents=[common, live, snapshots], help="find down BGP sessions and why",
+                        description="Check every BGP session the design expects up at --step from both ends, and "
+                                    "for each one that is down, list the likely causes: config, AS numbers, links, "
+                                    "MTU, BFD, underlay reachability, the DCI.")
+    bg.add_argument("--step", metavar="ID", help="migration step the fabric has reached (default: the last)")
+    bg.add_argument("--device", action="append", metavar="HOSTNAME", help="only this switch (repeatable)")
+    bg.add_argument("--all", action="store_true", help="also list the sessions that are fine")
+    bg.add_argument("--format", choices=("table", "json"), default="table", help="output format")
+    bg.set_defaults(func=cmd_bgp)
+
+    tln = sub.add_parser("timeline", parents=[live], help="merge the switches' logs into one event timeline",
+                         description="Merge link, BGP, BFD, vPC, NVE and MAC-move events from every switch's log "
+                                     "into one timeline and point at the first failure.")
+    tln.add_argument("--logs", metavar="DIR", help="folder of <hostname>.log files (from `netauto collect --logs`)")
+    tln.add_argument("--expected", metavar="FILE", help="expected-state.json (needed for --source nxapi and --site)")
+    tln.add_argument("--source", choices=("logs", "nxapi"), default="logs",
+                     help="read --logs, or fetch `show logging logfile` live (default: logs)")
+    tln.add_argument("--site", metavar="CODE", help="limit to one site (needs --expected)")
+    tln.add_argument("--device", action="append", metavar="HOSTNAME", help="only this switch (repeatable)")
+    tln.add_argument("--since", metavar="WHEN", help="from this time: '2026-10-23 14:00', or 30m / 2h / 1d before "
+                                                     "the newest log line")
+    tln.add_argument("--until", metavar="WHEN", help="up to this time (same forms as --since)")
+    tln.add_argument("--window", type=_positive_int, default=60, metavar="SECONDS",
+                     help="failures this soon after the first one count as its consequences (default: 60)")
+    tln.add_argument("--all", action="store_true", help="keep every log line, not only the events that matter")
+    tln.add_argument("--format", choices=("table", "json"), default="table", help="output format")
+    tln.add_argument("--color", choices=("auto", "always", "never"), default="auto",
+                     help="colourize output (default: auto)")
+    tln.set_defaults(func=cmd_timeline)
 
     inv = sub.add_parser("inventory", parents=[common], help="show the devices and steps the design defines")
     inv.set_defaults(func=cmd_inventory)

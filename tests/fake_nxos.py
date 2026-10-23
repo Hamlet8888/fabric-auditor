@@ -45,6 +45,8 @@ def running_config(design: Design, device: Device, state: Dict[str, Any]) -> str
     if "multisite" in state:
         lines += [f"evpn multisite border-gateway {state['multisite']['site_id']}", "  delay-restore time 300",
                   "interface loopback100", f"  ip address {state['multisite']['vip']}/32"]
+    for h in {(h["vlan"], h["vrf"]) for h in state.get("hosts", [])}:
+        lines += [f"interface Vlan{h[0]}", "  no shutdown", f"  vrf member {h[1]}"]
     if l2:
         lines.append("evpn")
         for v in l2:
@@ -66,7 +68,7 @@ def bgp_summary(state: Dict[str, Any], afi: str) -> Dict[str, Any]:
     rows = []
     for vrf in vrfs:
         nbrs = [{"neighborid": s["neighbor"], "neighborversion": "4", "msgrecvd": "100", "msgsent": "100",
-                 "neighboras": str(s["remote_as"]), "time": "21w0d",
+                 "neighboras": str(s["remote_as"]), "time": s.get("uptime", "21w0d"),
                  "state": s["state"], "prefixreceived": "3"}
                 for s in sessions if s["vrf"] == vrf]
         saf = {"safi": "1" if afi == "ipv4" else "70", "af-name": "IPv4 Unicast" if afi == "ipv4" else "L2VPN EVPN"}
@@ -76,6 +78,35 @@ def bgp_summary(state: Dict[str, Any], afi: str) -> Dict[str, Any]:
                      "vrf-local-as": str(state["bgp"]["local_as"]),
                      **table("af", [{"af-id": "1" if afi == "ipv4" else "25", **table("saf", [saf])}])})
     return table("vrf", rows)
+
+
+def route_table(state: Dict[str, Any]) -> Dict[str, Any]:
+    by_vrf: Dict[str, List[Dict[str, Any]]] = {"default": [], "management": []}
+    for r in state["routes"]:
+        by_vrf.setdefault(r["vrf"], []).append(r)
+    by_vrf["management"].append({"prefix": "0.0.0.0/0", "protocol": "static", "next_hops": ["10.0.0.1"], "encap": None})
+    # The switch's own loopback shows up as a local route, which the parser must skip.
+    by_vrf["default"].append({"prefix": state["bgp"]["router_id"] + "/32", "protocol": "local",
+                              "next_hops": ["loopback0"], "encap": None})
+    vrfs = []
+    for vrf, routes in by_vrf.items():
+        prefixes = []
+        for r in routes:
+            paths = []
+            for nh in r["next_hops"]:
+                path = {"uptime": "P21DT4H", "pref": "20", "metric": "0", "clientname": r["protocol"], "ubest": "true"}
+                if nh[0].isdigit():
+                    path["ipnexthop"] = nh
+                else:
+                    path["ifname"] = nh
+                if r["encap"] == "vxlan":
+                    path.update(segid="50010", tunnelid="0x0a6ef1c8", encap="vxlan")
+                paths.append(path)
+            prefixes.append({"ipprefix": r["prefix"], "ucast-nhops": str(len(paths)), "attached": "false",
+                             **table("path", paths)})
+        af = {"addrf": "ipv4", **(table("prefix", prefixes) if prefixes else {})}
+        vrfs.append({"vrf-name-out": vrf, **table("addrf", [af])})
+    return table("vrf", vrfs)
 
 
 def render(design: Design, device: Device, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -109,6 +140,7 @@ def render(design: Design, device: Device, state: Dict[str, Any]) -> Dict[str, A
         row["multisite-bgw-if"] = "loopback100"
         row["multisite-bgw-if-ip"] = state["multisite"]["vip"]
     raw[nxos.SHOW_NVE_IF] = table("nve_if", [row])
+    raw[nxos.SHOW_ROUTE] = route_table(state)
     raw[nxos.SHOW_EVPN_RD] = "\n".join(
         f"Route Distinguisher: {v['rd']}    ({'L2' if any(m['vni'] == v['vni'] and m['type'] == 'L2' for m in state['vni_map']) else 'L3'}VNI {v['vni']})"
         for v in state["evpn"]["vnis"]) + "\n"
@@ -117,6 +149,11 @@ def render(design: Design, device: Device, state: Dict[str, Any]) -> Dict[str, A
             raw[cmd] = "Interface      State\n---------      -----\n" + "".join(
                 f"{short_ifname(p):<15}{s}\n" for p, s in state["multisite"][key].items())
     else:
+        raw[nxos.SHOW_L2ROUTE] = table("l2route_mac_ip_all", [
+            {"topo-id": str(h["vlan"]), "mac-addr": h["mac"], "prod-type": "BGP" if h["source"] == "evpn" else "HMM",
+             "flags": "--" if h["source"] == "evpn" else "L,", "seq-num": "0", "host-ip": h["ip"],
+             "next-hop1": h["vtep"] if h["source"] == "evpn" else short_ifname(h["interface"])}
+            for h in state["hosts"]]) if state["hosts"] else None
         vpc = state["vpc"]
         raw[nxos.SHOW_VPC] = {
             "vpc-domain-id": str(vpc["domain"]), "vpc-peer-status": vpc["peer_status"],

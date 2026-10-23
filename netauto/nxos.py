@@ -38,6 +38,9 @@ SHOW_RUN = "show running-config"
 SHOW_EVPN_RD = 'show bgp l2vpn evpn | include "Route Distinguisher"'
 SHOW_MS_FABRIC = "show nve multisite fabric-links"
 SHOW_MS_DCI = "show nve multisite dci-links"
+SHOW_ROUTE = "show ip route vrf all"
+SHOW_L2ROUTE = "show l2route evpn mac-ip all"
+SHOW_LOG = "show logging logfile"  # netauto timeline; not part of the state
 
 #: Commands whose output is plain text (NX-API ``cli_ascii``); the rest are JSON (``cli``).
 ASCII = {SHOW_RUN, SHOW_EVPN_RD, SHOW_MS_FABRIC, SHOW_MS_DCI}
@@ -48,11 +51,11 @@ def commands(device: Device) -> List[str]:
     cmds = [SHOW_INTERFACE, SHOW_BGP_IPV4, SHOW_BGP_EVPN, SHOW_BFD, SHOW_RUN]
     if device.role == ROLE_SPINE:
         return cmds
-    cmds += [SHOW_NVE_VNI, SHOW_NVE_IF, SHOW_EVPN_RD]
+    cmds += [SHOW_NVE_VNI, SHOW_NVE_IF, SHOW_EVPN_RD, SHOW_ROUTE]
     if device.role == ROLE_BGW:
         cmds += [SHOW_MS_FABRIC, SHOW_MS_DCI]
     else:
-        cmds.append(SHOW_VPC)
+        cmds += [SHOW_VPC, SHOW_L2ROUTE]
     return cmds
 
 
@@ -205,6 +208,8 @@ def parse_bgp(out: Any, afi: str, bgp: Dict[str, Any]) -> None:
                         "remote_as": _int(n.get("neighboras")),
                         # NX-OS shows a prefix count instead of a state once a session is up.
                         "state": "Established" if state.isdigit() else state,
+                        # Up/down time: how long the session has been in its current state.
+                        **({"uptime": str(n["time"])} if n.get("time") else {}),
                     })
 
 
@@ -247,6 +252,55 @@ def parse_multisite_links(text: str) -> Dict[str, str]:
         if len(p) >= 2 and re.fullmatch(r"(Ethernet|Eth)\d+/\d+(\.\d+)?", p[0]):
             out[long_ifname(p[0])] = p[1]
     return out
+
+
+#: Route sources that are the switch's own addresses, not paths anywhere.
+_OWN_ROUTES = {"local", "hsrp", "vrrp", "am"}
+
+
+def parse_routes(out: Any) -> List[Dict[str, Any]]:
+    """Every IPv4 route except the management VRF and the switch's own /32s."""
+    routes = []
+    for vrf in rows(out, "TABLE_vrf", "ROW_vrf"):
+        name = vrf.get("vrf-name-out", "default")
+        if name == "management":
+            continue
+        for af in rows(vrf, "TABLE_addrf", "ROW_addrf"):
+            for p in rows(af, "TABLE_prefix", "ROW_prefix"):
+                paths = [x for x in rows(p, "TABLE_path", "ROW_path")
+                         if str(x.get("ubest", "true")).lower() == "true"]
+                protocols = [str(x.get("clientname", "")).split("-")[0] for x in paths]
+                if not paths or all(pr in _OWN_ROUTES for pr in protocols):
+                    continue
+                vxlan = any(x.get("encap") == "vxlan" or x.get("segid") for x in paths)
+                routes.append({
+                    "vrf": name, "prefix": p.get("ipprefix"), "protocol": protocols[0] or None,
+                    "next_hops": sorted({str(x.get("ipnexthop") or long_ifname(str(x.get("ifname", "")))) for x in paths}),
+                    "encap": "vxlan" if vxlan else None,
+                })
+    return routes
+
+
+def parse_hosts(out: Any, cfg: Stanza) -> List[Dict[str, Any]]:
+    """MAC-IP bindings: local ones on a port, EVPN-learned ones behind a VTEP. VRF from the VLAN's SVI."""
+    svi_vrf = {}
+    for node in cfg.find("interface"):
+        name = node.line.split(None, 1)[1]
+        if name.startswith("Vlan") and node.values("vrf member"):
+            svi_vrf[_int(name[4:])] = node.values("vrf member")[0]
+    hosts = []
+    for r in rows(out, "TABLE_l2route_mac_ip_all", "ROW_l2route_mac_ip_all"):
+        vlan, ip = _int(r.get("topo-id")), r.get("host-ip")
+        if vlan is None or not ip:
+            continue
+        nh = str(r.get("next-hop1", ""))
+        entry = {"vrf": svi_vrf.get(vlan), "vlan": vlan, "ip": ip, "mac": r.get("mac-addr")}
+        if str(r.get("prod-type", "")).upper() == "BGP":
+            entry.update(source="evpn", vtep=nh)
+        else:
+            entry.update(source="local", interface=long_ifname(nh))
+        hosts.append(entry)
+    return hosts
 
 
 def parse_vpc(out: Any, cfg: Stanza) -> Dict[str, Any]:
@@ -318,6 +372,7 @@ def parse(device: Device, raw: Dict[str, Any], collected_at: Optional[str] = Non
         "primary": nve.get("primary-ip"),
         "secondary": None if nve.get("secondary-ip") in (None, "", "0.0.0.0") else nve.get("secondary-ip"),
     }
+    state["routes"] = parse_routes(raw[SHOW_ROUTE])
     if device.role == ROLE_BGW:
         site_id = next((_int(n.line.split()[-1]) for n in cfg.find("evpn multisite border-gateway")), None)
         bgw_if = next((v.split()[-1] for n in cfg.find("interface nve1")
@@ -330,5 +385,6 @@ def parse(device: Device, raw: Dict[str, Any], collected_at: Optional[str] = Non
         }
     else:
         state["vpc"] = parse_vpc(raw[SHOW_VPC], cfg)
+        state["hosts"] = parse_hosts(raw[SHOW_L2ROUTE], cfg)
     return state
 

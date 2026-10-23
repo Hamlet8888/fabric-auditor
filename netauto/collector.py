@@ -22,7 +22,7 @@ Normalized device state (schema version 2)::
         "local_as": 65213,
         "sessions": [
           {"vrf": "default", "afi": "ipv4", "neighbor": "10.110.242.4",
-           "remote_as": 65210, "state": "Established"}
+           "remote_as": 65210, "state": "Established", "uptime": "3w2d"}   # uptime optional
         ]
       },
       "bfd": [{"neighbor": "10.110.242.4", "state": "Up"}],      # show bfd neighbors
@@ -42,6 +42,19 @@ Normalized device state (schema version 2)::
       "multisite": {"site_id": 110, "vip": "10.110.241.200",         # show nve multisite ...
                     "fabric_links": {"Ethernet1/49": "Up"}, "dci_links": {"Ethernet1/51": "Up"}}
     }
+
+Two optional sections feed the troubleshooting commands (``netauto path``, ``netauto diff``)::
+
+      "routes": [                                        # show ip route vrf all
+        {"vrf": "TRUST", "prefix": "10.120.10.0/24", "protocol": "bgp",
+         "next_hops": ["10.110.241.200"], "encap": "vxlan"}
+      ],
+      "hosts": [                                         # show l2route evpn mac-ip all
+        {"vrf": "TRUST", "vlan": 10, "ip": "10.110.10.10", "mac": "0050.5601.000a",
+         "source": "local", "interface": "port-channel100"},
+        {"vrf": "TRUST", "vlan": 10, "ip": "10.110.10.11", "mac": "0050.5601.010a",
+         "source": "evpn", "vtep": "10.110.241.102"}
+      ]
 
 Spines carry no ``evpn.vnis``, ``vni_map``, ``nve``, ``vpc`` or ``multisite``. Only leafs
 carry ``vpc`` and only border gateways ``multisite``.
@@ -236,6 +249,13 @@ def validate_state(hostname: str, data: Any) -> None:
     for i, v in enumerate(vmap):
         if not isinstance(v, dict) or not _is_int(v.get("vni")):
             raise StateError(f"vni_map[{i}]: 'vni' must be an integer")
+
+    for i, r in enumerate(data.get("routes", [])):
+        if not isinstance(r, dict) or not isinstance(r.get("prefix"), str) or not isinstance(r.get("next_hops"), list):
+            raise StateError(f"routes[{i}]: 'prefix' (string) and 'next_hops' (list) are required")
+    for i, h in enumerate(data.get("hosts", [])):
+        if not isinstance(h, dict) or not isinstance(h.get("ip"), str):
+            raise StateError(f"hosts[{i}]: 'ip' is required")
 
     for key in ("nve", "vpc", "multisite"):
         if data.get(key) is not None and not isinstance(data[key], dict):

@@ -74,6 +74,8 @@ class Vni:
     vrf: Optional[str]
     rd: str  # "auto": the RD's administrator field is the router-ID
     route_target: str
+    subnet: Optional[str] = None  # L2VNIs: host subnet and anycast gateway
+    gateway: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -176,6 +178,17 @@ class Design:
                  if not s.placeholder and s.afi == "ipv4" and ipaddress.ip_address(s.neighbor) in net]
         return min(steps, key=self.step_ids.index) if steps else self.step_ids[0]
 
+    def vtep_owners(self) -> Dict[str, List[str]]:
+        """VTEP address -> the switches answering on it: a primary, a vPC anycast VTEP, a Multi-Site VIP."""
+        owners: Dict[str, List[str]] = {}
+        for d in self.devices:
+            addrs = [d.nve.primary, d.nve.secondary] if d.nve else []
+            addrs += [d.multisite.vip] if d.multisite else []
+            for a in addrs:
+                if a and d.hostname not in owners.setdefault(a, []):
+                    owners[a].append(d.hostname)
+        return owners
+
     def vpc_pairs(self, site: Optional[str] = None) -> List[Tuple[Device, Device]]:
         pairs = []
         for d in self.select(site):
@@ -229,7 +242,8 @@ def _device(d: Dict[str, Any]) -> Device:
                          for name, i in d["interfaces"].items()),
         sessions=tuple(Session(s["step"], s["vrf"], s["afi"], s["neighbor"], int(s["remote_as"]), s["peer"],
                                bool(s["bfd"]), s.get("until")) for s in d["bgp"]),
-        vnis=tuple(Vni(int(v["vni"]), v["type"], v.get("vlan"), v.get("vrf"), v["rd"], v["route_target"])
+        vnis=tuple(Vni(int(v["vni"]), v["type"], v.get("vlan"), v.get("vrf"), v["rd"], v["route_target"],
+                       v.get("subnet"), v.get("gateway"))
                    for v in d.get("vnis", [])),
         nve=Nve(nve["source_interface"], nve["primary"], nve.get("secondary")) if nve else None,
         vpc=Vpc(int(vpc["domain"]), vpc["peer"], vpc["keepalive"], vpc["peer_link"]) if vpc else None,
